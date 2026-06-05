@@ -166,13 +166,6 @@ body{background:var(--black);color:var(--white);min-height:100vh;}
 .detail-val{font-size:13px;font-weight:600;color:var(--black);text-align:right;}
 .btn-close-modal{width:100%;padding:14px;background:var(--gray-100);border:none;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;margin-top:16px;color:var(--black);}
 
-.ai-summary{background:linear-gradient(135deg,#0F0F0F,#1A1A1A);border-radius:14px;padding:16px 18px;margin-bottom:14px;border:1px solid rgba(255,255,255,0.08);display:none;}
-.ai-summary.show{display:block;}
-.ai-label{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
-.ai-label span{font-size:11px;font-weight:700;color:#FF8080;text-transform:uppercase;letter-spacing:0.6px;}
-.ai-text{font-size:13px;color:rgba(255,255,255,0.8);line-height:1.7;white-space:pre-wrap;}
-.ai-loading{display:flex;align-items:center;gap:10px;font-size:13px;color:rgba(255,255,255,0.5);}
-.ai-spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,0.1);border-top-color:#FF8080;border-radius:50%;animation:spin 0.8s linear infinite;flex-shrink:0;}
 @keyframes spin{to{transform:rotate(360deg);}}
 
 .toast{position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--black);color:white;padding:12px 20px;border-radius:100px;font-size:13px;font-weight:600;z-index:999;transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1);white-space:nowrap;}
@@ -423,7 +416,6 @@ body{background:var(--black);color:var(--white);min-height:100vh;}
       <button class="tab-btn" onclick="switchTab(this,'tab-rekap');loadRekap()">📈 Rekap</button>
       <button class="tab-btn" onclick="switchTab(this,'tab-semua');loadSemuaLaporan()">📋 Laporan</button>
       <button class="tab-btn" onclick="switchTab(this,'tab-cari');initSearch()">🔍 Cari</button>
-      <button class="tab-btn" onclick="switchTab(this,'tab-rangkuman')">✨ AI</button>
     </div>
 
     <!-- DASHBOARD -->
@@ -520,23 +512,7 @@ body{background:var(--black);color:var(--white);min-height:100vh;}
       </div>
     </div>
 
-    <!-- AI -->
-    <div id="tab-rangkuman" style="display:none">
-      <div class="card">
-        <div class="card-header"><div><div class="card-title">✨ Rangkuman AI</div><div class="card-subtitle">AI merangkum semua laporan otomatis</div></div></div>
-        <div class="field-group"><label>Periode</label>
-          <select id="aiPeriode"><option value="">Semua Periode</option><option>Mei 2025</option><option>April 2025</option></select>
-        </div>
-        <div class="field-group"><label>Fokus Rangkuman</label>
-          <textarea id="aiFokus" placeholder="Contoh: Fokus pada SHU dan koperasi yang belum lapor" style="min-height:70px"></textarea>
-        </div>
-        <button class="btn-primary" onclick="buatRangkuman()">✨ Buat Rangkuman AI</button>
-      </div>
-      <div class="ai-summary" id="aiSummaryBox">
-        <div class="ai-label"><span>✦</span><span>Rangkuman AI</span></div>
-        <div class="ai-text" id="aiSummaryText"></div>
-      </div>
-    </div>
+
   </div>
 </div>
 
@@ -1478,29 +1454,6 @@ function showDetailLaporanById(lapId, fromKopId) {
 
 function closeModal(e){if(!e||e.target===document.getElementById('modalOverlay')||!e.target)document.getElementById('modalOverlay').classList.remove('show');}
 
-async function buatRangkuman(){
-  const box=document.getElementById('aiSummaryBox');
-  const textEl=document.getElementById('aiSummaryText');
-  const fokus=document.getElementById('aiFokus').value.trim();
-  const periode=document.getElementById('aiPeriode').value;
-  box.classList.add('show');
-  textEl.innerHTML='<div class="ai-loading"><div class="ai-spinner"></div> AI sedang merangkum laporan...</div>';
-  try{
-    let q='select=*&order=waktu_kirim.desc';
-    if(periode)q+=`&periode=eq.${encodeURIComponent(periode)}`;
-    const [laps,kops]=await Promise.all([dbGet('laporan',q),dbGet('koperasi','select=id,nama,kecamatan,pulau')]);
-    const sudahIds=[...new Set(laps.map(l=>l.koperasi_id))];
-    const belum=kops.filter(k=>!sudahIds.includes(k.id));
-    const totalPemasukan=laps.reduce((s,l)=>s+(l.pemasukan||0),0);
-    const totalShu=laps.reduce((s,l)=>s+(l.shu||0),0);
-    const totalAset=laps.reduce((s,l)=>s+(l.total_aset||0),0);
-    const dataRingkas=laps.map(l=>`${l.koperasi_nama}(${l.pulau||'-'}): pemasukan Rp${(l.pemasukan||0).toLocaleString('id')}, pengeluaran Rp${(l.pengeluaran||0).toLocaleString('id')}, SHU Rp${(l.shu||0).toLocaleString('id')}, aset Rp${(l.total_aset||0).toLocaleString('id')}, anggota ${l.anggota||0}, kendala:${l.kendala||'-'}`).join('\n');
-    const prompt=`Kamu asisten pengawas KMP Pattimura — Koperasi Desa Merah Putih wilayah Kepulauan Maluku. Data ${laps.length} laporan${periode?' periode '+periode:''}:\n\n${dataRingkas}\n\nTotal pemasukan: Rp${totalPemasukan.toLocaleString('id')}\nTotal SHU: Rp${totalShu.toLocaleString('id')}\nTotal Aset: Rp${totalAset.toLocaleString('id')}\nBelum lapor: ${belum.map(k=>k.nama+' ('+k.pulau+')').join(', ')||'tidak ada'}\n${fokus?'Fokus: '+fokus:''}\n\nBuat rangkuman eksekutif untuk pengawas: kondisi keuangan keseluruhan, SHU, koperasi terbaik & perlu perhatian, kendala utama, koperasi belum lapor, rekomendasi. Format rapi, Bahasa Indonesia profesional.`;
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
-    const data=await res.json();
-    textEl.textContent=data.content.map(i=>i.text||'').join('\n').trim();
-  }catch(e){textEl.textContent='⚠️ Gagal: '+e.message;}
-}
 
 function formatWaktu(iso){
   if(!iso)return'—';
