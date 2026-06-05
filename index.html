@@ -902,6 +902,19 @@ let currentUser=null,allKoperasi=[],allLaporan=[],allLaporanCache=[];
     sel.innerHTML='<option value="">— Pilih koperasi —</option>'+
       allKoperasi.map(k=>`<option value="${k.id}">${k.nama} — ${k.pulau||''}</option>`).join('');
   }catch(e){document.getElementById('loginKoperasi').innerHTML='<option>Gagal memuat</option>';}
+  // Restore session
+  try{
+    const saved=sessionStorage.getItem('kmpSession');
+    if(saved){
+      currentUser=JSON.parse(saved);
+      if(currentUser.role==='pengawas'){
+        showScreen('screen-pengawas');loadDashboard();
+      }else if(currentUser.role==='koperasi'&&currentUser.data){
+        applyKopUI(currentUser.data);
+        showScreen('screen-koperasi');
+      }
+    }
+  }catch(e){sessionStorage.removeItem('kmpSession');}
 })();
 
 function toggleRoleField(){
@@ -920,6 +933,7 @@ async function doLogin(){
     if(role==='pengawas'){
       if(pass!=='pengawas123')return showLoginError('Password pengawas salah');
       currentUser={role:'pengawas'};
+      sessionStorage.setItem('kmpSession',JSON.stringify(currentUser));
       showScreen('screen-pengawas');loadDashboard();
     }else{
       const kopId=document.getElementById('loginKoperasi').value;
@@ -931,9 +945,8 @@ async function doLogin(){
       const kop=allKoperasi.find(k=>String(k.id)===String(kopId));
       if(!kop)return showLoginError('Koperasi tidak ditemukan');
       currentUser={role:'koperasi',id:kop.id,data:kop};
-      document.getElementById('kopTag').textContent=kop.nama.substring(0,8);
-      document.getElementById('kopAvatar').textContent=kop.nama.substring(0,2).toUpperCase();
-      document.getElementById('kopName').textContent=kop.pulau||kop.nama;
+      sessionStorage.setItem('kmpSession',JSON.stringify(currentUser));
+      applyKopUI(kop);
       showScreen('screen-koperasi');
     }
   }catch(e){showLoginError('Error: '+e.message);}
@@ -946,7 +959,8 @@ function showLoginError(msg){
   document.getElementById('btnLogin').disabled=false;
   document.getElementById('btnLogin').textContent='Masuk →';
 }
-function logout(){currentUser=null;showScreen('screen-login');document.getElementById('loginPassword').value='';document.getElementById('loginError').classList.remove('show');}
+function logout(){currentUser=null;sessionStorage.removeItem('kmpSession');showScreen('screen-login');document.getElementById('loginPassword').value='';document.getElementById('loginError').classList.remove('show');}
+function applyKopUI(kop){document.getElementById('kopTag').textContent=kop.nama.substring(0,8);document.getElementById('kopAvatar').textContent=kop.nama.substring(0,2).toUpperCase();document.getElementById('kopName').textContent=kop.pulau||kop.nama;}
 function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
 function switchTab(btn,tabId){
   btn.closest('.tabs').querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
