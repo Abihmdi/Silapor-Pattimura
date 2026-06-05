@@ -1,0 +1,1622 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KMP Pattimura — Koperasi Merah Putih</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+:root {
+  --red:#D42B2B;--red-dark:#A81F1F;--red-light:#FFF0F0;
+  --black:#0F0F0F;--white:#FFFFFF;--gray-50:#F8F8F8;--gray-100:#F0F0F0;
+  --gray-200:#E2E2E2;--gray-400:#9A9A9A;--gray-600:#555555;
+  --green:#1A9E5C;--green-light:#EDFAF3;--orange:#E07B2A;--orange-light:#FFF5EB;
+  --blue:#2563EB;--blue-light:#EFF6FF;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body, input, select, textarea, button, option{font-family:'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;}
+body{background:var(--black);color:var(--white);min-height:100vh;}
+.screen{display:none;min-height:100vh;}
+.screen.active{display:flex;flex-direction:column;}
+
+#screen-login{background:var(--black);align-items:center;justify-content:center;padding:24px;position:relative;overflow:hidden;}
+.login-bg{position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(212,43,43,0.18) 0%,transparent 70%);pointer-events:none;}
+.login-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;}
+.login-box{position:relative;width:100%;max-width:400px;z-index:1;}
+.login-logo{text-align:center;margin-bottom:40px;}
+.login-logo .badge{display:inline-flex;align-items:center;gap:8px;background:rgba(212,43,43,0.15);border:1px solid rgba(212,43,43,0.3);border-radius:100px;padding:6px 14px;margin-bottom:16px;}
+.login-logo .badge span{font-size:12px;color:#FF8080;font-weight:500;letter-spacing:0.5px;}
+.login-logo h1{font-size:36px;font-weight:800;letter-spacing:-1px;line-height:1;}
+.login-logo h1 em{color:var(--red);font-style:normal;}
+.login-logo p{font-size:13px;color:var(--gray-400);margin-top:6px;}
+.login-form{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:28px;backdrop-filter:blur(20px);}
+.form-group{margin-bottom:16px;}
+.form-group label{display:block;font-size:12px;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;}
+.form-group input,.form-group select{width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:13px 16px;font-size:14px;color:white;outline:none;transition:border 0.2s;-webkit-appearance:none;}
+.form-group input:focus,.form-group select:focus{border-color:var(--red);}
+.form-group select option{background:#1A1A1A;color:white;}
+.btn-login{width:100%;padding:15px;background:var(--red);border:none;border-radius:12px;color:white;font-size:15px;font-weight:700;cursor:pointer;transition:all 0.2s;margin-top:8px;}
+.btn-login:hover{background:var(--red-dark);}
+.btn-login:disabled{opacity:0.5;cursor:not-allowed;}
+.login-hint{text-align:center;margin-top:16px;font-size:12px;color:var(--gray-400);}
+.login-error{background:rgba(212,43,43,0.15);border:1px solid rgba(212,43,43,0.3);border-radius:10px;padding:10px 14px;font-size:12px;color:#FF8080;margin-top:12px;display:none;text-align:center;}
+.login-error.show{display:block;}
+
+#screen-koperasi,#screen-pengawas{background:var(--gray-50);color:var(--black);}
+.topbar{background:var(--white);border-bottom:1px solid var(--gray-200);padding:0 20px;height:58px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.topbar-left{display:flex;align-items:center;gap:10px;}
+.topbar-logo{font-size:16px;font-weight:800;color:var(--black);letter-spacing:-0.5px;}
+.topbar-logo em{color:var(--red);font-style:normal;}
+.topbar-tag{background:var(--red-light);color:var(--red);font-size:10px;font-weight:700;padding:3px 8px;border-radius:100px;text-transform:uppercase;letter-spacing:0.5px;}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.user-chip{display:flex;align-items:center;gap:8px;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:100px;padding:5px 12px 5px 5px;}
+.user-avatar{width:28px;height:28px;border-radius:50%;background:var(--red);color:white;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+.user-name{font-size:12px;font-weight:600;color:var(--black);}
+.btn-logout{background:none;border:none;color:var(--gray-400);cursor:pointer;font-size:18px;padding:4px;}
+.page-content{flex:1;overflow-y:auto;padding:20px 16px;max-width:720px;margin:0 auto;width:100%;}
+
+.tabs{display:flex;gap:4px;background:var(--gray-100);border-radius:12px;padding:4px;margin-bottom:20px;overflow-x:auto;}
+.tab-btn{flex:1;padding:9px 6px;border:none;border-radius:9px;background:none;font-size:12px;font-weight:500;color:var(--gray-600);cursor:pointer;transition:all 0.2s;white-space:nowrap;}
+.tab-btn.active{background:white;color:var(--black);font-weight:600;box-shadow:0 1px 4px rgba(0,0,0,0.1);}
+
+.card{background:white;border-radius:16px;padding:18px;margin-bottom:14px;border:1px solid var(--gray-100);}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.card-title{font-size:14px;font-weight:700;color:var(--black);}
+.card-subtitle{font-size:11px;color:var(--gray-400);margin-top:2px;}
+
+.section-divider{display:flex;align-items:center;gap:10px;margin:18px 0 14px;}
+.section-divider-line{flex:1;height:1px;background:var(--gray-100);}
+.section-divider-label{font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:0.8px;background:var(--red-light);padding:4px 10px;border-radius:100px;}
+
+.field-group{margin-bottom:12px;}
+.field-group label{display:block;font-size:11px;font-weight:600;color:var(--gray-600);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px;}
+.field-group input,.field-group select,.field-group textarea{width:100%;background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:10px;padding:11px 13px;font-size:13px;color:var(--black);outline:none;transition:border 0.2s;-webkit-appearance:none;}
+.field-group input:focus,.field-group select:focus,.field-group textarea:focus{border-color:var(--red);background:white;}
+.field-group textarea{resize:vertical;min-height:80px;}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.field-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+
+.upload-zone{border:2px dashed var(--gray-200);border-radius:12px;padding:20px;text-align:center;cursor:pointer;transition:all 0.2s;position:relative;background:var(--gray-50);}
+.upload-zone:hover{border-color:var(--red);background:var(--red-light);}
+.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.upload-zone .u-icon{font-size:24px;margin-bottom:6px;}
+.upload-zone p{font-size:13px;font-weight:600;color:var(--black);margin-bottom:2px;}
+.upload-zone small{font-size:11px;color:var(--gray-400);}
+.file-chip{display:none;align-items:center;gap:10px;background:var(--green-light);border:1px solid rgba(26,158,92,0.2);border-radius:10px;padding:10px 14px;margin-top:10px;}
+.file-chip.show{display:flex;}
+.file-chip-name{flex:1;font-size:13px;font-weight:600;color:var(--green);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.file-chip-remove{background:none;border:none;color:var(--gray-400);cursor:pointer;font-size:16px;}
+
+.btn-primary{width:100%;padding:14px;background:var(--red);color:white;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s;}
+.btn-primary:hover{background:var(--red-dark);}
+.btn-primary:disabled{opacity:0.4;cursor:not-allowed;}
+
+.badge-status{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:100px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;}
+.badge-status.masuk{background:var(--green-light);color:var(--green);}
+.badge-status.belum{background:var(--orange-light);color:var(--orange);}
+
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.stat-card{background:white;border:1px solid var(--gray-100);border-radius:14px;padding:14px;}
+.stat-label{font-size:10px;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px;}
+.stat-value{font-size:24px;font-weight:800;color:var(--black);line-height:1;}
+.stat-value.red{color:var(--red);}
+.stat-value.green{color:var(--green);}
+.stat-value.orange{color:var(--orange);}
+.stat-value.blue{color:var(--blue);}
+
+.rekap-hero{background:linear-gradient(135deg,#0F0F0F,#1C1C1C);border-radius:16px;padding:20px;margin-bottom:14px;border:1px solid rgba(255,255,255,0.06);}
+.rekap-hero-label{font-size:11px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;}
+.rekap-hero-value{font-size:30px;font-weight:800;color:white;line-height:1;margin-bottom:4px;}
+.rekap-hero-sub{font-size:12px;color:rgba(255,255,255,0.4);}
+.rekap-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;}
+.rekap-mini{background:rgba(255,255,255,0.05);border-radius:10px;padding:12px;}
+.rekap-mini-label{font-size:10px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;}
+.rekap-mini-value{font-size:16px;font-weight:800;color:white;}
+.rekap-mini-value.green{color:#4ADE80;}
+.rekap-mini-value.red{color:#F87171;}
+
+.bar-chart{margin-top:4px;}
+.bar-item{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:6px;border-radius:8px;transition:background 0.2s;}
+.bar-item:hover{background:var(--gray-100);}
+.bar-label{font-size:11px;color:var(--gray-600);width:80px;flex-shrink:0;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.bar-track{flex:1;background:var(--gray-100);border-radius:100px;height:12px;overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,0.05);}
+.bar-fill{height:100%;border-radius:100px;background:var(--red);transition:width 0.6s ease;box-shadow:0 1px 3px rgba(212,43,43,0.3);}
+.bar-fill.green{background:var(--green);box-shadow:0 1px 3px rgba(26,158,92,0.3);}
+.bar-val{font-size:11px;color:var(--gray-600);width:60px;text-align:right;flex-shrink:0;font-weight:600;}
+
+/* SEARCH */
+.search-bar{display:flex;gap:8px;margin-bottom:16px;}
+.search-input{flex:1;background:white;border:1.5px solid var(--gray-200);border-radius:10px;padding:11px 14px;font-size:13px;color:var(--black);outline:none;transition:border 0.2s;}
+.search-input:focus{border-color:var(--red);}
+.search-filter{background:white;border:1.5px solid var(--gray-200);border-radius:10px;padding:11px 12px;font-size:12px;color:var(--black);outline:none;-webkit-appearance:none;cursor:pointer;}
+.search-result-count{font-size:12px;color:var(--gray-400);margin-bottom:12px;font-weight:500;}
+.highlight{background:#FFF3CD;border-radius:3px;padding:1px 3px;font-weight:700;color:#92400E;}
+
+.laporan-item{display:flex;align-items:flex-start;gap:12px;padding:14px 0;border-bottom:1px solid var(--gray-100);cursor:pointer;}
+.laporan-item:last-child{border-bottom:none;padding-bottom:0;}
+.laporan-item:first-child{padding-top:0;}
+.laporan-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;background:var(--blue-light);}
+.laporan-info{flex:1;min-width:0;}
+.laporan-name{font-size:13px;font-weight:600;color:var(--black);margin-bottom:3px;}
+.laporan-meta{font-size:11px;color:var(--gray-400);}
+.laporan-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0;}
+.laporan-time{font-size:11px;color:var(--gray-400);}
+.kop-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--gray-100);cursor:pointer;}
+.kop-item:last-child{border-bottom:none;}
+.kop-avatar{width:38px;height:38px;border-radius:12px;background:var(--red);color:white;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.kop-info{flex:1;min-width:0;}
+.kop-name{font-size:13px;font-weight:600;color:var(--black);margin-bottom:2px;}
+.kop-last{font-size:11px;color:var(--gray-400);}
+
+/* FILE VIEWER */
+.file-link{display:inline-flex;align-items:center;gap:8px;background:var(--blue-light);border:1px solid rgba(37,99,235,0.15);border-radius:10px;padding:10px 14px;font-size:13px;font-weight:600;color:var(--blue);text-decoration:none;margin-top:12px;}
+.file-link:hover{background:#DBEAFE;}
+
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px);}
+.modal-overlay.show{display:flex;}
+.modal{background:white;border-radius:24px 24px 0 0;padding:24px 20px 40px;width:100%;max-width:640px;max-height:88vh;overflow-y:auto;animation:slideUp 0.3s ease;}
+@keyframes slideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+.modal-handle{width:40px;height:4px;background:var(--gray-200);border-radius:100px;margin:0 auto 20px;}
+.modal-title{font-size:17px;font-weight:800;color:var(--black);margin-bottom:4px;}
+.modal-sub{font-size:12px;color:var(--gray-400);margin-bottom:16px;}
+.detail-section{font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:0.8px;margin:14px 0 8px;padding-bottom:4px;border-bottom:2px solid var(--red-light);}
+.detail-row{display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--gray-100);gap:12px;}
+.detail-row:last-child{border-bottom:none;}
+.detail-key{font-size:12px;color:var(--gray-400);font-weight:500;flex-shrink:0;}
+.detail-val{font-size:13px;font-weight:600;color:var(--black);text-align:right;}
+.btn-close-modal{width:100%;padding:14px;background:var(--gray-100);border:none;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;margin-top:16px;color:var(--black);}
+
+.ai-summary{background:linear-gradient(135deg,#0F0F0F,#1A1A1A);border-radius:14px;padding:16px 18px;margin-bottom:14px;border:1px solid rgba(255,255,255,0.08);display:none;}
+.ai-summary.show{display:block;}
+.ai-label{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.ai-label span{font-size:11px;font-weight:700;color:#FF8080;text-transform:uppercase;letter-spacing:0.6px;}
+.ai-text{font-size:13px;color:rgba(255,255,255,0.8);line-height:1.7;white-space:pre-wrap;}
+.ai-loading{display:flex;align-items:center;gap:10px;font-size:13px;color:rgba(255,255,255,0.5);}
+.ai-spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,0.1);border-top-color:#FF8080;border-radius:50%;animation:spin 0.8s linear infinite;flex-shrink:0;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+.toast{position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--black);color:white;padding:12px 20px;border-radius:100px;font-size:13px;font-weight:600;z-index:999;transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1);white-space:nowrap;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+.empty{text-align:center;padding:32px 20px;}
+.empty-icon{font-size:36px;margin-bottom:10px;}
+.empty p{font-size:13px;color:var(--gray-400);}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.section-title{font-size:15px;font-weight:800;color:var(--black);}
+.section-count{background:var(--red-light);color:var(--red);font-size:11px;font-weight:700;padding:3px 9px;border-radius:100px;}
+.loading-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:150px;gap:12px;}
+.loading-spin{width:28px;height:28px;border:3px solid var(--gray-200);border-top-color:var(--red);border-radius:50%;animation:spin 0.8s linear infinite;}
+.loading-screen p{font-size:13px;color:var(--gray-400);}
+.info-box{background:var(--blue-light);border:1px solid rgba(37,99,235,0.15);border-radius:10px;padding:12px 14px;font-size:12px;color:var(--blue);margin-bottom:14px;line-height:1.6;}
+.upload-progress{height:4px;background:var(--gray-100);border-radius:100px;margin-top:8px;overflow:hidden;display:none;}
+.upload-progress.show{display:block;}
+.upload-progress-fill{height:100%;background:var(--green);border-radius:100px;transition:width 0.3s;}
+/* TRANSITION ANIMATIONS */
+.screen, [id^="tab-"] {
+  animation: fadeIn 0.3s ease-in-out;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+/* PRINT MEDIA CSS FOR PDF EXPORT */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  body > *:not(#modalOverlay) {
+    display: none !important;
+  }
+  #modalOverlay {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    display: block !important;
+    background: none !important;
+    backdrop-filter: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  .modal {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+  }
+  .modal-handle, .modal-footer-btns, .btn-close-modal, #btnPrintModal {
+    display: none !important;
+  }
+  .detail-section {
+    border-bottom: 2px solid #ddd !important;
+    color: #000 !important;
+    margin-top: 15px !important;
+    padding-bottom: 4px !important;
+    page-break-after: avoid;
+  }
+  .detail-row {
+    border-bottom: 1px solid #eee !important;
+    padding: 6px 0 !important;
+    page-break-inside: avoid;
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="screen-login" class="screen active">
+  <div class="login-bg"></div><div class="login-grid"></div>
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="badge"><span>● SISTEM AKTIF</span></div>
+      <h1>KMP <em>Pattimura</em></h1>
+      <p>Platform Pelaporan Koperasi Merah Putih · Maluku</p>
+    </div>
+    <div class="login-form">
+      <div class="form-group">
+        <label>Masuk sebagai</label>
+        <select id="loginRole" onchange="toggleRoleField()">
+          <option value="">— Pilih peran —</option>
+          <option value="koperasi">Koperasi</option>
+          <option value="pengawas">Pengawas</option>
+        </select>
+      </div>
+      <div class="form-group" id="groupKoperasi" style="display:none">
+        <label>Pilih Koperasi</label>
+        <select id="loginKoperasi"><option>Memuat data...</option></select>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="loginPassword" placeholder="Masukkan password" onkeydown="if(event.key==='Enter')doLogin()"/>
+      </div>
+      <button class="btn-login" id="btnLogin" onclick="doLogin()">Masuk →</button>
+      <div class="login-error" id="loginError"></div>
+      <p class="login-hint">Password pengawas: <strong>pengawas123</strong></p>
+    </div>
+  </div>
+</div>
+
+<!-- KOPERASI -->
+<div id="screen-koperasi" class="screen">
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="topbar-logo">KMP <em>Pattimura</em></span>
+      <span class="topbar-tag" id="kopTag">KMP</span>
+    </div>
+    <div class="topbar-right">
+      <div class="user-chip">
+        <div class="user-avatar" id="kopAvatar">K</div>
+        <span class="user-name" id="kopName">Koperasi</span>
+      </div>
+      <button class="btn-logout" onclick="logout()">↩</button>
+    </div>
+  </div>
+  <div class="page-content">
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab(this,'tab-kirim')">📤 Kirim Laporan</button>
+      <button class="tab-btn" onclick="switchTab(this,'tab-riwayat');loadRiwayat()">📋 Riwayat</button>
+    </div>
+
+    <div id="tab-kirim">
+      <div class="info-box">📋 Format laporan sesuai standar Permenkop UKM No. 2 Tahun 2024.</div>
+
+      <div class="card">
+        <div class="card-header"><div><div class="card-title">📌 Identitas Laporan</div></div></div>
+        <div class="field-row">
+          <div class="field-group"><label>Periode</label>
+            <select id="fPeriode"><option>Mei 2025</option><option>April 2025</option><option>Maret 2025</option><option>Februari 2025</option><option>Januari 2025</option></select>
+          </div>
+          <div class="field-group"><label>Jenis Laporan</label>
+            <select id="fJenis"><option>Bulanan</option><option>Triwulan</option><option>Tahunan</option></select>
+          </div>
+        </div>
+        <div class="field-group"><label>Jumlah Anggota Aktif</label><input type="number" id="fAnggota" placeholder="0"/></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div><div class="card-title">⚖️ Neraca (Posisi Keuangan)</div><div class="card-subtitle">Aset, kewajiban & ekuitas koperasi</div></div></div>
+        <div class="section-divider"><div class="section-divider-line"></div><div class="section-divider-label">Aset</div><div class="section-divider-line"></div></div>
+        <div class="field-row">
+          <div class="field-group"><label>Total Aset (Rp)</label><input type="number" id="fTotalAset" placeholder="0" oninput="hitungNeraca()"/></div>
+          <div class="field-group"><label>Kas & Bank (Rp)</label><input type="number" id="fKasBank" placeholder="0" oninput="hitungNeraca()"/></div>
+        </div>
+        <div class="field-row">
+          <div class="field-group"><label>Piutang Anggota (Rp)</label><input type="number" id="fPiutang" placeholder="0" oninput="hitungNeraca()"/></div>
+          <div class="field-group"><label>Pinjaman Disalurkan (Rp)</label><input type="number" id="fPinjaman" placeholder="0" oninput="hitungNeraca()"/></div>
+        </div>
+        <div class="section-divider"><div class="section-divider-line"></div><div class="section-divider-label">Kewajiban & Ekuitas</div><div class="section-divider-line"></div></div>
+        <div class="field-row">
+          <div class="field-group"><label>Total Kewajiban (Utang) (Rp)</label><input type="number" id="fKewajiban" placeholder="0" oninput="hitungNeraca()"/></div>
+          <div class="field-group"><label>Dana Cadangan & Hibah (Rp)</label><input type="number" id="fCadanganHibah" placeholder="0" oninput="hitungNeraca()"/></div>
+        </div>
+        <div class="section-divider"><div class="section-divider-line"></div><div class="section-divider-label">Simpanan Anggota</div><div class="section-divider-line"></div></div>
+        <div class="field-row-3">
+          <div class="field-group"><label>Simpanan Pokok (Rp)</label><input type="number" id="fSimpananPokok" placeholder="0" oninput="hitungNeraca()"/></div>
+          <div class="field-group"><label>Simpanan Wajib (Rp)</label><input type="number" id="fSimpananWajib" placeholder="0" oninput="hitungNeraca()"/></div>
+          <div class="field-group"><label>Simpanan Sukarela (Rp)</label><input type="number" id="fSimpananSukarela" placeholder="0" oninput="hitungNeraca()"/></div>
+        </div>
+        <div id="neracaBalanceBadge" style="margin-top:14px;padding:10px 14px;border-radius:10px;font-size:12px;font-weight:600;display:none;text-align:center;line-height:1.5;"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div><div class="card-title">📊 Perhitungan Hasil Usaha (PHU)</div><div class="card-subtitle">Pendapatan & beban operasional</div></div></div>
+        <div class="section-divider"><div class="section-divider-line"></div><div class="section-divider-label">Pendapatan</div><div class="section-divider-line"></div></div>
+        <div class="field-row">
+          <div class="field-group"><label>Jasa Pinjaman (Bunga) (Rp)</label><input type="number" id="fJasaPinjaman" placeholder="0" oninput="hitungPHU()"/></div>
+          <div class="field-group"><label>Provisi & Administrasi (Rp)</label><input type="number" id="fPendapatanAdmin" placeholder="0" oninput="hitungPHU()"/></div>
+        </div>
+        <div class="field-row">
+          <div class="field-group"><label>Usaha Toko / Lainnya (Rp)</label><input type="number" id="fPendapatanUsaha" placeholder="0" oninput="hitungPHU()"/></div>
+          <div class="field-group"><label>Total Pemasukan (Rp)</label><input type="number" id="fPemasukan" placeholder="0" readonly style="background:var(--gray-100);cursor:not-allowed;font-weight:600;"/></div>
+        </div>
+        <div class="section-divider"><div class="section-divider-line"></div><div class="section-divider-label">Beban</div><div class="section-divider-line"></div></div>
+        <div class="field-row">
+          <div class="field-group"><label>Beban Jasa Simpanan (Rp)</label><input type="number" id="fBebanJasa" placeholder="0" oninput="hitungPHU()"/></div>
+          <div class="field-group"><label>Beban Operasional (Rp)</label><input type="number" id="fBebanOperasional" placeholder="0" oninput="hitungPHU()"/></div>
+        </div>
+        <div class="field-row">
+          <div class="field-group"><label>Beban RAT & Koperasi (Rp)</label><input type="number" id="fBebanKoperasi" placeholder="0" oninput="hitungPHU()"/></div>
+          <div class="field-group"><label>Total Pengeluaran (Rp)</label><input type="number" id="fPengeluaran" placeholder="0" readonly style="background:var(--gray-100);cursor:not-allowed;font-weight:600;"/></div>
+        </div>
+        <div class="section-divider"><div class="section-divider-line"></div><div class="section-divider-label">Hasil Akhir</div><div class="section-divider-line"></div></div>
+        <div class="field-group"><label>SHU Periode Ini (Rp)</label><input type="number" id="fShu" placeholder="0" readonly style="background:var(--gray-100);font-weight:700;color:var(--green);cursor:not-allowed;"/></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div><div class="card-title">📝 Catatan & Rencana</div></div></div>
+        <div class="field-group"><label>Kendala yang Dihadapi</label><textarea id="fKendala" placeholder="Tuliskan kendala operasional, keuangan, atau keanggotaan..."></textarea></div>
+        <div class="field-group"><label>Rencana Tindak Lanjut</label><textarea id="fRencana" placeholder="Tuliskan rencana perbaikan atau program ke depan..."></textarea></div>
+        <div class="field-group"><label>Catatan Tambahan</label><textarea id="fCatatan" placeholder="Informasi lain yang perlu diketahui pengawas..." style="min-height:60px"></textarea></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div><div class="card-title">📎 Lampiran File</div><div class="card-subtitle">Upload dokumen pendukung (opsional)</div></div></div>
+        <div class="upload-zone">
+          <input type="file" id="kFileInput" accept=".pdf,.xlsx,.xls" onchange="handleKopFile(this)"/>
+          <div class="u-icon">📁</div><p>Ketuk untuk upload file</p><small>PDF atau Excel — laporan keuangan, neraca, dll</small>
+        </div>
+        <div class="upload-progress" id="uploadProgress"><div class="upload-progress-fill" id="uploadProgressFill" style="width:0%"></div></div>
+        <div class="file-chip" id="kFileChip">
+          <span>📄</span><span class="file-chip-name" id="kFileName">—</span>
+          <button class="file-chip-remove" onclick="hapusKopFile()">✕</button>
+        </div>
+      </div>
+
+      <button class="btn-primary" id="btnKirim" onclick="kirimLaporan()">📤 Kirim Laporan ke Pengawas</button>
+    </div>
+
+    <div id="tab-riwayat" style="display:none">
+      <div class="card">
+        <div class="card-header"><div class="card-title">Laporan Terkirim</div></div>
+        <div id="riwayatList"><div class="loading-screen"><div class="loading-spin"></div><p>Memuat...</p></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PENGAWAS -->
+<div id="screen-pengawas" class="screen">
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="topbar-logo">KMP <em>Pattimura</em></span>
+      <span class="topbar-tag" style="background:#FFF5EB;color:#E07B2A;">PENGAWAS</span>
+    </div>
+    <div class="topbar-right">
+      <div class="user-chip">
+        <div class="user-avatar" style="background:#E07B2A;">PW</div>
+        <span class="user-name">Pengawas</span>
+      </div>
+      <button class="btn-logout" onclick="logout()">↩</button>
+    </div>
+  </div>
+  <div class="page-content">
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab(this,'tab-dashboard');loadDashboard()">📊 Dashboard</button>
+      <button class="tab-btn" onclick="switchTab(this,'tab-rekap');loadRekap()">📈 Rekap</button>
+      <button class="tab-btn" onclick="switchTab(this,'tab-semua');loadSemuaLaporan()">📋 Laporan</button>
+      <button class="tab-btn" onclick="switchTab(this,'tab-cari');initSearch()">🔍 Cari</button>
+      <button class="tab-btn" onclick="switchTab(this,'tab-rangkuman')">✨ AI</button>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="tab-dashboard">
+      <!-- Periode Filter & Progress Bar Kepatuhan -->
+      <div class="card" style="padding:14px 16px;margin-bottom:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <div style="font-size:12px;font-weight:700;color:var(--black);">⚡ Kepatuhan Laporan Koperasi</div>
+          <select id="dashPeriode" onchange="loadDashboard()" style="background:var(--gray-50);border:1px solid var(--gray-200);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:600;color:var(--black);outline:none;cursor:pointer;">
+            <option>Mei 2025</option>
+            <option>April 2025</option>
+            <option>Maret 2025</option>
+            <option>Februari 2025</option>
+            <option>Januari 2025</option>
+          </select>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:11px;font-weight:600;">
+          <span style="color:var(--gray-600);">Tingkat Kepatuhan Cabang</span>
+          <span id="statKepatuhanPersen" style="color:var(--red);">0%</span>
+        </div>
+        <div style="width:100%;height:10px;background:var(--gray-100);border-radius:100px;overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,0.05);">
+          <div id="statKepatuhanBar" style="width:0%;height:100%;background:linear-gradient(90deg, var(--orange), var(--red));border-radius:100px;transition:width 0.8s cubic-bezier(0.34,1.56,0.64,1);"></div>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-label">Total Koperasi</div><div class="stat-value" id="statTotal">—</div></div>
+        <div class="stat-card"><div class="stat-label">Sudah Lapor</div><div class="stat-value green" id="statSudah">—</div></div>
+        <div class="stat-card"><div class="stat-label">Belum Lapor</div><div class="stat-value orange" id="statBelum">—</div></div>
+        <div class="stat-card"><div class="stat-label">Total Anggota</div><div class="stat-value blue" id="statAnggota">—</div></div>
+      </div>
+      <div class="card">
+        <div class="section-header"><div class="section-title">Status per Kepulauan</div><span class="section-count" id="countKop">—</span></div>
+        <div id="koperasiStatusList"><div class="loading-screen"><div class="loading-spin"></div><p>Memuat...</p></div></div>
+      </div>
+    </div>
+
+    <!-- REKAP -->
+    <div id="tab-rekap" style="display:none">
+      <div class="card" style="padding:14px 16px;">
+        <div class="field-row">
+          <div class="field-group" style="margin:0"><label>Filter Periode</label>
+            <select id="rekapPeriode" onchange="loadRekap()"><option value="">Semua Periode</option><option>Mei 2025</option><option>April 2025</option><option>Maret 2025</option></select>
+          </div>
+          <div class="field-group" style="margin:0"><label>Filter Kepulauan</label>
+            <select id="rekapPulau" onchange="loadRekap()"><option value="">Semua Kepulauan</option></select>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:14px;">
+          <button class="btn-primary" onclick="unduhRekapExcel()" style="background:var(--green);font-size:12px;padding:10px 14px;display:flex;align-items:center;justify-content:center;gap:6px;width:auto;margin:0;">📥 Unduh Rekap (Excel)</button>
+          <button class="btn-primary" onclick="showGlossaryModal()" style="background:var(--blue);font-size:12px;padding:10px 14px;display:flex;align-items:center;justify-content:center;gap:6px;width:auto;margin:0;">ℹ️ Bantuan Istilah</button>
+        </div>
+      </div>
+      <div class="rekap-hero" id="rekapHero"><div class="loading-screen"><div class="loading-spin" style="border-top-color:#FF8080"></div><p style="color:rgba(255,255,255,0.4)">Menghitung...</p></div></div>
+      <div class="card" id="rekapChartCard" style="display:none">
+        <div class="card-header"><div><div class="card-title">📊 Pemasukan per Kepulauan</div><div class="card-subtitle" id="rekapChartSub">—</div></div></div>
+        <div class="bar-chart" id="rekapBarChart"></div>
+      </div>
+      <div class="card" id="rekapShuCard" style="display:none">
+        <div class="card-header"><div><div class="card-title">💰 SHU per Kepulauan</div></div></div>
+        <div class="bar-chart" id="rekapShuChart"></div>
+      </div>
+      <div class="card" id="rekapRankCard" style="display:none">
+        <div class="card-header"><div><div class="card-title">🏆 Ranking Koperasi</div></div></div>
+        <div id="rekapRankList"></div>
+      </div>
+    </div>
+
+    <!-- SEMUA LAPORAN -->
+    <div id="tab-semua" style="display:none">
+      <div class="card">
+        <div class="section-header"><div class="section-title">Laporan Masuk</div><span class="section-count" id="totalLaporan">—</span></div>
+        <div id="semuaLaporanList"><div class="loading-screen"><div class="loading-spin"></div><p>Memuat...</p></div></div>
+      </div>
+    </div>
+
+    <!-- SEARCH -->
+    <div id="tab-cari" style="display:none">
+      <div class="card">
+        <div class="card-header"><div><div class="card-title">🔍 Cari Laporan</div><div class="card-subtitle">Cari berdasarkan keyword, koperasi, periode, atau kendala</div></div></div>
+        <div class="search-bar">
+          <input type="text" class="search-input" id="searchInput" placeholder="Ketik keyword pencarian..." oninput="doSearch()"/>
+          <select class="search-filter" id="searchFilter" onchange="doSearch()">
+            <option value="">Semua</option>
+            <option value="koperasi_nama">Koperasi</option>
+            <option value="periode">Periode</option>
+            <option value="pulau">Kepulauan</option>
+            <option value="kendala">Kendala</option>
+            <option value="catatan">Catatan</option>
+          </select>
+        </div>
+        <div class="search-result-count" id="searchCount" style="display:none"></div>
+        <div id="searchResults"><div class="empty"><div class="empty-icon">🔍</div><p>Ketik keyword untuk mulai mencari</p></div></div>
+      </div>
+    </div>
+
+    <!-- AI -->
+    <div id="tab-rangkuman" style="display:none">
+      <div class="card">
+        <div class="card-header"><div><div class="card-title">✨ Rangkuman AI</div><div class="card-subtitle">AI merangkum semua laporan otomatis</div></div></div>
+        <div class="field-group"><label>Periode</label>
+          <select id="aiPeriode"><option value="">Semua Periode</option><option>Mei 2025</option><option>April 2025</option></select>
+        </div>
+        <div class="field-group"><label>Fokus Rangkuman</label>
+          <textarea id="aiFokus" placeholder="Contoh: Fokus pada SHU dan koperasi yang belum lapor" style="min-height:70px"></textarea>
+        </div>
+        <button class="btn-primary" onclick="buatRangkuman()">✨ Buat Rangkuman AI</button>
+      </div>
+      <div class="ai-summary" id="aiSummaryBox">
+        <div class="ai-label"><span>✦</span><span>Rangkuman AI</span></div>
+        <div class="ai-text" id="aiSummaryText"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modalTitle">Detail</div>
+    <div class="modal-sub" id="modalSub">—</div>
+    <div id="modalBody"></div>
+    <div class="modal-footer-btns" style="display:flex;gap:10px;margin-top:16px;">
+      <button class="btn-primary" id="btnPrintModal" onclick="printModalReport()" style="flex:1;margin:0;background:var(--blue);display:flex;align-items:center;justify-content:center;gap:6px;">🖨️ Cetak PDF</button>
+      <button class="btn-close-modal" onclick="closeModal()" style="flex:1;margin:0;">Tutup</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">✓</div>
+
+<script>
+const SUPABASE_URL='https://vuincywepfqudgrkgecs.supabase.co';
+const SUPABASE_KEY='sb_publishable_EEF-pJtnLlYFBkbJcSaAkw_NmobIvFc';
+const H={'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY};
+
+// MOCK DATA SYSTEM
+let USE_MOCK = false;
+let currentRekapLaporan = []; // To store reports for export
+
+const MOCK_KOPERASI = [
+  { id: 1, nama: 'KMP-Ambon', kecamatan: 'Kota Ambon', pulau: 'Kepulauan Ambon', password: 'kmpambon' },
+  { id: 2, nama: 'KMP-Seram', kecamatan: 'Maluku Tengah', pulau: 'Kepulauan Seram', password: 'kmpseram' },
+  { id: 3, nama: 'KMP-Buru', kecamatan: 'Kabupaten Buru', pulau: 'Kepulauan Buru', password: 'kmpburu' },
+  { id: 4, nama: 'KMP-Kei', kecamatan: 'Maluku Tenggara', pulau: 'Kepulauan Kei', password: 'kmpkei' },
+  { id: 5, nama: 'KMP-Tanimbar', kecamatan: 'Kepulauan Tanimbar', pulau: 'Kepulauan Tanimbar', password: 'kmptanimbar' },
+  { id: 6, nama: 'KMP-Aru', kecamatan: 'Kepulauan Aru', pulau: 'Kepulauan Aru', password: 'kmparu' },
+  { id: 7, nama: 'KMP-Babar', kecamatan: 'Maluku Barat Daya', pulau: 'Kepulauan Babar', password: 'kmpbabar' }
+];
+
+const MOCK_LAPORAN = [
+  {
+    id: 101,
+    koperasi_id: 1,
+    koperasi_nama: 'KMP-Ambon',
+    pulau: 'Kepulauan Ambon',
+    periode: 'Mei 2025',
+    jenis: 'Bulanan',
+    total_aset: 450000000,
+    kas_bank: 100000000,
+    total_kewajiban: 120000000,
+    piutang_anggota: 80000000,
+    pinjaman_disalurkan: 150000000,
+    simpanan_pokok: 50000000,
+    simpanan_wajib: 180000000,
+    simpanan_sukarela: 100000000,
+    cadangan_hibah: 0,
+    pemasukan: 35000000,
+    jasa_pinjaman: 25000000,
+    pendapatan_admin: 4000000,
+    pendapatan_usaha: 6000000,
+    pengeluaran: 22000000,
+    beban_jasa_simpanan: 3000000,
+    beban_operasional: 15000000,
+    beban_perkoperasian: 4000000,
+    shu: 13000000,
+    anggota: 120,
+    catatan: 'Operasional berjalan lancar, simpanan meningkat.',
+    kendala: 'Keterlambatan pembayaran cicilan dari beberapa anggota.',
+    rencana_tindak: 'Pendekatan personal untuk anggota yang menunggak.',
+    file_url: null,
+    file_name: null,
+    waktu_kirim: '2026-05-31T10:00:00Z'
+  },
+  {
+    id: 102,
+    koperasi_id: 2,
+    koperasi_nama: 'KMP-Seram',
+    pulau: 'Kepulauan Seram',
+    periode: 'Mei 2025',
+    jenis: 'Bulanan',
+    total_aset: 380000000,
+    kas_bank: 80000000,
+    total_kewajiban: 90000000,
+    piutang_anggota: 60000000,
+    pinjaman_disalurkan: 120000000,
+    simpanan_pokok: 40000000,
+    simpanan_wajib: 150000000,
+    simpanan_sukarela: 80000000,
+    cadangan_hibah: 20000000,
+    pemasukan: 28000000,
+    jasa_pinjaman: 20000000,
+    pendapatan_admin: 3000000,
+    pendapatan_usaha: 5000000,
+    pengeluaran: 19000000,
+    beban_jasa_simpanan: 2500000,
+    beban_operasional: 13500000,
+    beban_perkoperasian: 3000000,
+    shu: 9000000,
+    anggota: 95,
+    catatan: 'Permintaan pinjaman baru meningkat bulan ini.',
+    kendala: 'Jaringan internet lambat untuk entry data.',
+    rencana_tindak: 'Upgrade paket internet kantor.',
+    file_url: null,
+    file_name: null,
+    waktu_kirim: '2026-05-30T14:30:00Z'
+  },
+  {
+    id: 103,
+    koperasi_id: 3,
+    koperasi_nama: 'KMP-Buru',
+    pulau: 'Kepulauan Buru',
+    periode: 'Mei 2025',
+    jenis: 'Bulanan',
+    total_aset: 310000000,
+    kas_bank: 65000000,
+    total_kewajiban: 70000000,
+    piutang_anggota: 50000000,
+    pinjaman_disalurkan: 95000000,
+    simpanan_pokok: 35000000,
+    simpanan_wajib: 120000000,
+    simpanan_sukarela: 70000000,
+    cadangan_hibah: 15000000,
+    pemasukan: 22000000,
+    jasa_pinjaman: 16000000,
+    pendapatan_admin: 2500000,
+    pendapatan_usaha: 3500000,
+    pengeluaran: 15000000,
+    beban_jasa_simpanan: 2000000,
+    beban_operasional: 10500000,
+    beban_perkoperasian: 2500000,
+    shu: 7000000,
+    anggota: 80,
+    catatan: 'Anggota bertambah 5 orang.',
+    kendala: 'Sosialisasi permenkop baru belum merata.',
+    rencana_tindak: 'Melakukan rapat anggota tahunan mini.',
+    file_url: null,
+    file_name: null,
+    waktu_kirim: '2026-05-29T09:15:00Z'
+  },
+  {
+    id: 104,
+    koperasi_id: 4,
+    koperasi_nama: 'KMP-Kei',
+    pulau: 'Kepulauan Kei',
+    periode: 'Mei 2025',
+    jenis: 'Bulanan',
+    total_aset: 290000000,
+    kas_bank: 60000000,
+    total_kewajiban: 60000000,
+    piutang_anggota: 40000000,
+    pinjaman_disalurkan: 80000000,
+    simpanan_pokok: 30000000,
+    simpanan_wajib: 110000000,
+    simpanan_sukarela: 60000000,
+    cadangan_hibah: 30000000,
+    pemasukan: 19000000,
+    jasa_pinjaman: 14000000,
+    pendapatan_admin: 2000000,
+    pendapatan_usaha: 3000000,
+    pengeluaran: 13000000,
+    beban_jasa_simpanan: 1500000,
+    beban_operasional: 9500000,
+    beban_perkoperasian: 2000000,
+    shu: 6000000,
+    anggota: 75,
+    catatan: 'Kas koperasi dalam kondisi sehat.',
+    kendala: 'Beberapa pengurus sakit.',
+    rencana_tindak: 'Pembagian tugas sementara.',
+    file_url: null,
+    file_name: null,
+    waktu_kirim: '2026-05-28T08:00:00Z'
+  },
+  {
+    id: 105,
+    koperasi_id: 5,
+    koperasi_nama: 'KMP-Tanimbar',
+    pulau: 'Kepulauan Tanimbar',
+    periode: 'April 2025',
+    jenis: 'Bulanan',
+    total_aset: 250000000,
+    kas_bank: 50000000,
+    total_kewajiban: 50000000,
+    piutang_anggota: 35000000,
+    pinjaman_disalurkan: 70000000,
+    simpanan_pokok: 25000000,
+    simpanan_wajib: 100000000,
+    simpanan_sukarela: 50000000,
+    cadangan_hibah: 25000000,
+    pemasukan: 16000000,
+    jasa_pinjaman: 12000000,
+    pendapatan_admin: 1500000,
+    pendapatan_usaha: 2500000,
+    pengeluaran: 11000000,
+    beban_jasa_simpanan: 1000000,
+    beban_operasional: 8500000,
+    beban_perkoperasian: 1500000,
+    shu: 5000000,
+    anggota: 68,
+    catatan: 'Laporan triwulan sedang dipersiapkan.',
+    kendala: 'Keterbatasan transportasi antarpulau.',
+    rencana_tindak: 'Koordinasi digital via WA grup.',
+    file_url: null,
+    file_name: null,
+    waktu_kirim: '2026-04-30T11:00:00Z'
+  },
+  {
+    id: 106,
+    koperasi_id: 1,
+    koperasi_nama: 'KMP-Ambon',
+    pulau: 'Kepulauan Ambon',
+    periode: 'April 2025',
+    jenis: 'Bulanan',
+    total_aset: 440000000,
+    kas_bank: 95000000,
+    total_kewajiban: 115000000,
+    piutang_anggota: 75000000,
+    pinjaman_disalurkan: 145000000,
+    simpanan_pokok: 50000000,
+    simpanan_wajib: 175000000,
+    simpanan_sukarela: 95000000,
+    cadangan_hibah: 5000000,
+    pemasukan: 33000000,
+    jasa_pinjaman: 24000000,
+    pendapatan_admin: 3500000,
+    pendapatan_usaha: 5500000,
+    pengeluaran: 21000000,
+    beban_jasa_simpanan: 2800000,
+    beban_operasional: 14200000,
+    beban_perkoperasian: 4000000,
+    shu: 12000000,
+    anggota: 118,
+    catatan: 'Rencana ekspansi usaha toko koperasi.',
+    kendala: 'Stok barang terlambat datang.',
+    rencana_tindak: 'Mencari supplier alternatif terdekat.',
+    file_url: null,
+    file_name: null,
+    waktu_kirim: '2026-04-29T15:00:00Z'
+  }
+];
+
+function updateMockBanner() {
+  if (USE_MOCK) {
+    const badge = document.querySelector('.login-logo .badge span');
+    if (badge) {
+      badge.textContent = '● MODE SIMULASI (OFFLINE)';
+      badge.style.color = '#FF8080';
+    }
+    const kopTag = document.getElementById('kopTag');
+    if (kopTag) {
+      kopTag.textContent = 'SIMULASI';
+      kopTag.style.background = '#FFF0F0';
+      kopTag.style.color = 'var(--red)';
+    }
+    const pwTag = document.querySelector('#screen-pengawas .topbar-tag');
+    if (pwTag) {
+      pwTag.textContent = 'PENGAWAS (SIMULASI)';
+      pwTag.style.background = '#FFF0F0';
+      pwTag.style.color = 'var(--red)';
+    }
+  }
+}
+
+function queryMock(table, q = '') {
+  let list = table === 'koperasi' ? [...MOCK_KOPERASI] : [...MOCK_LAPORAN];
+  if (!q) return list;
+  
+  const params = new URLSearchParams(q);
+  for (let [key, val] of params.entries()) {
+    if (key === 'select' || key === 'order') continue;
+    if (val.startsWith('eq.')) {
+      const targetVal = decodeURIComponent(val.substring(3));
+      list = list.filter(item => String(item[key]) === String(targetVal));
+    }
+  }
+  
+  const order = params.get('order');
+  if (order) {
+    const [field, dir] = order.split('.');
+    const isDesc = dir === 'desc';
+    list.sort((a, b) => {
+      let valA = a[field];
+      let valB = b[field];
+      if (typeof valA === 'string') {
+        return isDesc ? valB.localeCompare(valA) : valA.localeCompare(valB);
+      }
+      return isDesc ? (valB - valA) : (valA - valB);
+    });
+  }
+  return list;
+}
+
+function insertMock(table, data) {
+  if (table === 'laporan') {
+    const newReport = {
+      id: Date.now(),
+      ...data,
+      waktu_kirim: data.waktu_kirim || new Date().toISOString()
+    };
+    MOCK_LAPORAN.unshift(newReport);
+    return [newReport];
+  }
+  return [data];
+}
+
+async function dbGet(table,q=''){
+  if (USE_MOCK) {
+    updateMockBanner();
+    return queryMock(table, q);
+  }
+  try {
+    const r=await fetch(`${SUPABASE_URL}/rest/v1/${table}${q?'?'+q:''}`,{headers:H});
+    if(!r.ok)throw new Error(await r.text());
+    return await r.json();
+  } catch(e) {
+    if (!USE_MOCK) {
+      USE_MOCK = true;
+      console.warn('Database offline, switching to Mock Data Mode:', e.message);
+      setTimeout(() => {
+        showToast('⚠️ Supabase Offline. Berpindah ke Mode Mock Data.');
+        updateMockBanner();
+      }, 500);
+    }
+    return queryMock(table, q);
+  }
+}
+
+async function dbInsert(table,data){
+  if (USE_MOCK) {
+    updateMockBanner();
+    return insertMock(table, data);
+  }
+  try {
+    const r=await fetch(`${SUPABASE_URL}/rest/v1/${table}`,{method:'POST',headers:{...H,'Prefer':'return=representation'},body:JSON.stringify(data)});
+    if(!r.ok)throw new Error(await r.text());
+    return await r.json();
+  } catch(e) {
+    if (!USE_MOCK) {
+      USE_MOCK = true;
+      console.warn('Database offline, switching to Mock Data Mode:', e.message);
+      setTimeout(() => {
+        showToast('⚠️ Supabase Offline. Menyimpan ke Mock Data.');
+        updateMockBanner();
+      }, 500);
+    }
+    return insertMock(table, data);
+  }
+}
+
+async function dbRpc(fnName,body){
+  if (USE_MOCK) {
+    if (fnName === 'verify_koperasi_password') {
+      const kop = MOCK_KOPERASI.find(k => k.id === body.kop_id);
+      return kop && kop.password === body.pass_input;
+    }
+    return false;
+  }
+  try {
+    const r=await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fnName}`,{
+      method:'POST',
+      headers:H,
+      body:JSON.stringify(body)
+    });
+    if(!r.ok)throw new Error(await r.text());
+    return await r.json();
+  } catch(e) {
+    if (!USE_MOCK) {
+      USE_MOCK = true;
+      console.warn('Database offline, switching to Mock Data Mode:', e.message);
+      setTimeout(() => {
+        showToast('⚠️ Supabase Offline. Berpindah ke Mode Mock Data.');
+        updateMockBanner();
+      }, 500);
+    }
+    if (fnName === 'verify_koperasi_password') {
+      const kop = MOCK_KOPERASI.find(k => k.id === body.kop_id);
+      return kop && kop.password === body.pass_input;
+    }
+    return false;
+  }
+}
+
+let currentUser=null,allKoperasi=[],allLaporan=[],allLaporanCache=[];
+
+(async()=>{
+  try{
+    allKoperasi=await dbGet('koperasi','select=id,nama,kecamatan,pulau&order=nama');
+    const sel=document.getElementById('loginKoperasi');
+    sel.innerHTML='<option value="">— Pilih koperasi —</option>'+
+      allKoperasi.map(k=>`<option value="${k.id}">${k.nama} — ${k.pulau||''}</option>`).join('');
+  }catch(e){document.getElementById('loginKoperasi').innerHTML='<option>Gagal memuat</option>';}
+})();
+
+function toggleRoleField(){
+  document.getElementById('groupKoperasi').style.display=document.getElementById('loginRole').value==='koperasi'?'block':'none';
+}
+
+async function doLogin(){
+  const role=document.getElementById('loginRole').value;
+  const pass=document.getElementById('loginPassword').value;
+  const btn=document.getElementById('btnLogin');
+  document.getElementById('loginError').classList.remove('show');
+  if(!role)return showLoginError('Pilih peran terlebih dahulu');
+  if(!pass)return showLoginError('Masukkan password');
+  btn.disabled=true;btn.textContent='Memuat...';
+  try{
+    if(role==='pengawas'){
+      if(pass!=='pengawas123')return showLoginError('Password pengawas salah');
+      currentUser={role:'pengawas'};
+      showScreen('screen-pengawas');loadDashboard();
+    }else{
+      const kopId=document.getElementById('loginKoperasi').value;
+      if(!kopId)return showLoginError('Pilih koperasi terlebih dahulu');
+      
+      const isCorrect = await dbRpc('verify_koperasi_password', { kop_id: parseInt(kopId), pass_input: pass });
+      if(!isCorrect)return showLoginError('Password salah');
+      
+      const kop=allKoperasi.find(k=>String(k.id)===String(kopId));
+      if(!kop)return showLoginError('Koperasi tidak ditemukan');
+      currentUser={role:'koperasi',id:kop.id,data:kop};
+      document.getElementById('kopTag').textContent=kop.nama.substring(0,8);
+      document.getElementById('kopAvatar').textContent=kop.nama.substring(0,2).toUpperCase();
+      document.getElementById('kopName').textContent=kop.pulau||kop.nama;
+      showScreen('screen-koperasi');
+    }
+  }catch(e){showLoginError('Error: '+e.message);}
+  finally{btn.disabled=false;btn.textContent='Masuk →';}
+}
+
+function showLoginError(msg){
+  const el=document.getElementById('loginError');
+  el.textContent='⚠️ '+msg;el.classList.add('show');
+  document.getElementById('btnLogin').disabled=false;
+  document.getElementById('btnLogin').textContent='Masuk →';
+}
+function logout(){currentUser=null;showScreen('screen-login');document.getElementById('loginPassword').value='';document.getElementById('loginError').classList.remove('show');}
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
+function switchTab(btn,tabId){
+  btn.closest('.tabs').querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  let el=btn.closest('.tabs').nextElementSibling;
+  while(el){if(el.id&&el.id.startsWith('tab-'))el.style.display='none';el=el.nextElementSibling;}
+  document.getElementById(tabId).style.display='block';
+}
+
+// FILE UPLOAD
+let selectedFile=null;
+function handleKopFile(input){
+  if(input.files[0]){
+    selectedFile=input.files[0];
+    document.getElementById('kFileName').textContent=selectedFile.name;
+    document.getElementById('kFileChip').classList.add('show');
+  }
+}
+function hapusKopFile(){
+  selectedFile=null;
+  document.getElementById('kFileInput').value='';
+  document.getElementById('kFileChip').classList.remove('show');
+}
+
+async function uploadFile(file,kopId){
+  if (USE_MOCK) {
+    return {url:'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',name:file.name};
+  }
+  try {
+    const fileName=`${kopId}_${Date.now()}_${file.name}`;
+    const r=await fetch(`${SUPABASE_URL}/storage/v1/object/laporan-files/${fileName}`,{
+      method:'POST',
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':file.type,'x-upsert':'true'},
+      body:file
+    });
+    if(!r.ok)throw new Error('Upload file gagal');
+    return {url:`${SUPABASE_URL}/storage/v1/object/public/laporan-files/${fileName}`,name:file.name};
+  } catch(e) {
+    showToast('⚠️ Upload berkas disimulasikan (Mode Offline).');
+    return {url:'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',name:file.name};
+  }
+}
+
+// AUTO-CALCULATION & BALANCE CHECK
+function hitungPHU() {
+  const jasaPinjaman = parseInt(document.getElementById('fJasaPinjaman').value) || 0;
+  const admin = parseInt(document.getElementById('fPendapatanAdmin').value) || 0;
+  const usaha = parseInt(document.getElementById('fPendapatanUsaha').value) || 0;
+  
+  const bebanJasa = parseInt(document.getElementById('fBebanJasa').value) || 0;
+  const bebanOperasional = parseInt(document.getElementById('fBebanOperasional').value) || 0;
+  const bebanKoperasi = parseInt(document.getElementById('fBebanKoperasi').value) || 0;
+  
+  const totalPemasukan = jasaPinjaman + admin + usaha;
+  const totalPengeluaranVal = bebanJasa + bebanOperasional + bebanKoperasi;
+  const shu = totalPemasukan - totalPengeluaranVal;
+  
+  document.getElementById('fPemasukan').value = totalPemasukan;
+  document.getElementById('fPengeluaran').value = totalPengeluaranVal;
+  document.getElementById('fShu').value = shu;
+}
+
+function hitungNeraca() {
+  const aset = parseInt(document.getElementById('fTotalAset').value) || 0;
+  const kewajiban = parseInt(document.getElementById('fKewajiban').value) || 0;
+  const pokok = parseInt(document.getElementById('fSimpananPokok').value) || 0;
+  const wajib = parseInt(document.getElementById('fSimpananWajib').value) || 0;
+  const sukarela = parseInt(document.getElementById('fSimpananSukarela').value) || 0;
+  const cadangan = parseInt(document.getElementById('fCadanganHibah').value) || 0;
+  
+  const totalPasiva = kewajiban + pokok + wajib + sukarela + cadangan;
+  const badge = document.getElementById('neracaBalanceBadge');
+  
+  if (aset === 0 && totalPasiva === 0) {
+    badge.style.display = 'none';
+    return;
+  }
+  
+  badge.style.display = 'block';
+  if (aset === totalPasiva) {
+    badge.style.background = 'var(--green-light)';
+    badge.style.color = 'var(--green)';
+    badge.innerHTML = '✓ Neraca Seimbang (Aktiva = Pasiva = Rp ' + aset.toLocaleString('id') + ')';
+  } else {
+    const selisih = Math.abs(aset - totalPasiva);
+    badge.style.background = 'var(--red-light)';
+    badge.style.color = 'var(--red)';
+    badge.innerHTML = '⚠️ Neraca Belum Seimbang (Selisih: Rp ' + selisih.toLocaleString('id') + ')<br>' +
+                      `<small>Aktiva: Rp ${aset.toLocaleString('id')} | Pasiva: Rp ${totalPasiva.toLocaleString('id')}</small>`;
+  }
+}
+
+async function kirimLaporan(){
+  const pemasukan=parseInt(document.getElementById('fPemasukan').value)||0;
+  const pengeluaran=parseInt(document.getElementById('fPengeluaran').value)||0;
+  const anggota=parseInt(document.getElementById('fAnggota').value)||0;
+  const catatan=document.getElementById('fCatatan').value;
+  const kendala=document.getElementById('fKendala').value;
+  const rencana=document.getElementById('fRencana').value;
+  const shu=parseInt(document.getElementById('fShu').value)||0;
+  
+  // Neraca
+  const totalAset=parseInt(document.getElementById('fTotalAset').value)||0;
+  const kasBank=parseInt(document.getElementById('fKasBank').value)||0;
+  const piutang=parseInt(document.getElementById('fPiutang').value)||0;
+  const pinjaman=parseInt(document.getElementById('fPinjaman').value)||0;
+  const kewajiban=parseInt(document.getElementById('fKewajiban').value)||0;
+  const cadanganHibah=parseInt(document.getElementById('fCadanganHibah').value)||0;
+  const simpananPokok=parseInt(document.getElementById('fSimpananPokok').value)||0;
+  const simpananWajib=parseInt(document.getElementById('fSimpananWajib').value)||0;
+  const simpananSukarela=parseInt(document.getElementById('fSimpananSukarela').value)||0;
+  
+  // PHU
+  const jasaPinjaman=parseInt(document.getElementById('fJasaPinjaman').value)||0;
+  const pendapatanAdmin=parseInt(document.getElementById('fPendapatanAdmin').value)||0;
+  const pendapatanUsaha=parseInt(document.getElementById('fPendapatanUsaha').value)||0;
+  const bebanJasa=parseInt(document.getElementById('fBebanJasa').value)||0;
+  const bebanOperasional=parseInt(document.getElementById('fBebanOperasional').value)||0;
+  const bebanKoperasi=parseInt(document.getElementById('fBebanKoperasi').value)||0;
+  
+  const periode=document.getElementById('fPeriode').value;
+  const jenis=document.getElementById('fJenis').value;
+  
+  if(!pemasukan && !anggota && !catatan){showToast('⚠️ Isi minimal satu data laporan');return;}
+
+  const btn=document.getElementById('btnKirim');
+  btn.disabled=true;btn.textContent='Mengirim...';
+
+  let fileUrl=null,fileName=null;
+  if(selectedFile){
+    try{
+      const prog=document.getElementById('uploadProgress');
+      const fill=document.getElementById('uploadProgressFill');
+      prog.classList.add('show');fill.style.width='50%';
+      const result=await uploadFile(selectedFile,currentUser.id);
+      fileUrl=result.url;fileName=result.name;
+      fill.style.width='100%';
+      setTimeout(()=>prog.classList.remove('show'),1000);
+    }catch(e){showToast('⚠️ File gagal diupload, laporan tetap terkirim tanpa lampiran');}
+  }
+
+  try{
+    await dbInsert('laporan',{
+      koperasi_id:currentUser.id,koperasi_nama:currentUser.data.nama,
+      pulau:currentUser.data.pulau||'',periode,jenis,
+      pemasukan,pengeluaran,anggota,catatan,kendala,
+      rencana_tindak:rencana,shu,bunga_pinjaman:jasaPinjaman,
+      total_aset:totalAset,total_kewajiban:kewajiban,
+      piutang_anggota:piutang,pinjaman_disalurkan:pinjaman,
+      simpanan_pokok:simpananPokok,simpanan_wajib:simpananWajib,
+      simpanan_sukarela:simpananSukarela,
+      file_url:fileUrl,file_name:fileName,
+      waktu_kirim:new Date().toISOString(),
+      // New fields
+      kas_bank: kasBank,
+      cadangan_hibah: cadanganHibah,
+      jasa_pinjaman: jasaPinjaman,
+      pendapatan_admin: pendapatanAdmin,
+      pendapatan_usaha: pendapatanUsaha,
+      beban_jasa_simpanan: bebanJasa,
+      beban_operasional: bebanOperasional,
+      beban_perkoperasian: bebanKoperasi
+    });
+    ['fPemasukan','fPengeluaran','fAnggota','fCatatan','fKendala','fRencana','fShu','fTotalAset','fKewajiban','fPiutang','fPinjaman','fSimpananPokok','fSimpananWajib','fSimpananSukarela','fKasBank','fCadanganHibah','fJasaPinjaman','fPendapatanAdmin','fPendapatanUsaha','fBebanJasa','fBebanOperasional','fBebanKoperasi'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+    document.getElementById('neracaBalanceBadge').style.display='none';
+    hapusKopFile();selectedFile=null;
+    showToast('✓ Laporan berhasil dikirim ke pengawas!');
+  }catch(e){showToast('⚠️ Gagal: '+e.message);}
+  finally{btn.disabled=false;btn.textContent='📤 Kirim Laporan ke Pengawas';}
+}
+
+async function loadRiwayat(){
+  const el=document.getElementById('riwayatList');
+  el.innerHTML='<div class="loading-screen"><div class="loading-spin"></div><p>Memuat...</p></div>';
+  try{
+    const data=await dbGet('laporan',`koperasi_id=eq.${currentUser.id}&order=waktu_kirim.desc`);
+    if(!data.length){el.innerHTML='<div class="empty"><div class="empty-icon">📭</div><p>Belum ada laporan terkirim</p></div>';return;}
+    el.innerHTML=data.map(l=>`
+      <div class="laporan-item" onclick='showDetailLaporan(${JSON.stringify(l)})'>
+        <div class="laporan-icon">📋</div>
+        <div class="laporan-info"><div class="laporan-name">Laporan ${l.jenis} — ${l.periode}</div>
+        <div class="laporan-meta">Pemasukan: Rp${(l.pemasukan||0).toLocaleString('id')} · SHU: Rp${(l.shu||0).toLocaleString('id')}${l.file_name?' · 📎 '+l.file_name:''}</div></div>
+        <div class="laporan-right"><span class="badge-status masuk">✓ Terkirim</span><span class="laporan-time">${formatWaktu(l.waktu_kirim)}</span></div>
+      </div>`).join('');
+  }catch(e){el.innerHTML='<div class="empty"><div class="empty-icon">⚠️</div><p>'+e.message+'</p></div>';}
+}
+
+async function loadDashboard(){
+  try{
+    const [kops,laps]=await Promise.all([dbGet('koperasi','select=id,nama,kecamatan,pulau'),dbGet('laporan','select=*&order=waktu_kirim.desc')]);
+    allKoperasi=kops;allLaporan=laps;allLaporanCache=laps;
+    
+    const activePeriode = document.getElementById('dashPeriode').value;
+    const filteredLaps = laps.filter(l => l.periode === activePeriode);
+    const sudahIds = [...new Set(filteredLaps.map(l => l.koperasi_id))];
+    const totalAnggota = filteredLaps.reduce((s,l) => s + (l.anggota||0), 0);
+    
+    document.getElementById('statTotal').textContent=kops.length;
+    document.getElementById('statSudah').textContent=sudahIds.length;
+    document.getElementById('statBelum').textContent=kops.length-sudahIds.length;
+    document.getElementById('statAnggota').textContent=totalAnggota.toLocaleString('id');
+    document.getElementById('countKop').textContent=kops.length+' Koperasi';
+
+    // Update Progress Bar Kepatuhan
+    const totalKop = kops.length;
+    const sudahLop = sudahIds.length;
+    const persen = totalKop > 0 ? Math.round((sudahLop / totalKop) * 100) : 0;
+    const barEl = document.getElementById('statKepatuhanBar');
+    const persenEl = document.getElementById('statKepatuhanPersen');
+    if (barEl && persenEl) {
+      barEl.style.width = persen + '%';
+      persenEl.textContent = persen + '% (' + sudahLop + ' dari ' + totalKop + ' Cabang)';
+    }
+
+    // Grouping by Kepulauan / Wilayah
+    const groups = {
+      '📍 Gugusan Ambon & Seram (Utara & Tengah)': [],
+      '📍 Gugusan Kei & Aru (Tenggara)': [],
+      '📍 Gugusan Buru, Tanimbar, Babar (Selatan & Barat Daya)': []
+    };
+    
+    kops.forEach(k => {
+      const currentLap = laps.find(l => l.koperasi_id === k.id && l.periode === activePeriode);
+      const hasPelaporan = !!currentLap;
+      const lastLap = laps.find(l => l.koperasi_id === k.id);
+      
+      const itemHtml = `<div class="kop-item" onclick="showDetailKop(${k.id})">
+        <div class="kop-avatar">${k.pulau?k.pulau.replace('Kepulauan ','').substring(0,3).toUpperCase():k.nama.substring(0,2).toUpperCase()}</div>
+        <div class="kop-info">
+          <div class="kop-name">${k.nama} — ${k.pulau||''}</div>
+          <div class="kop-last">${currentLap ? formatWaktu(currentLap.waktu_kirim)+' · SHU Rp'+(currentLap.shu||0).toLocaleString('id') : (lastLap ? 'Belum lapor periode ini (Terakhir: '+lastLap.periode+')' : 'Belum pernah lapor')}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+          ${hasPelaporan?'<span class="badge-status masuk">✓ Lapor</span>':'<span class="badge-status belum" style="background:#FFF5EB;color:#E07B2A;">● Belum</span>'}
+        </div>
+      </div>`;
+
+      if (k.nama.includes('Ambon') || k.nama.includes('Seram')) {
+        groups['📍 Gugusan Ambon & Seram (Utara & Tengah)'].push(itemHtml);
+      } else if (k.nama.includes('Kei') || k.nama.includes('Aru')) {
+        groups['📍 Gugusan Kei & Aru (Tenggara)'].push(itemHtml);
+      } else {
+        groups['📍 Gugusan Buru, Tanimbar, Babar (Selatan & Barat Daya)'].push(itemHtml);
+      }
+    });
+
+    let listHtml = '';
+    for (let [groupName, items] of Object.entries(groups)) {
+      if (items.length > 0) {
+        listHtml += `<div style="font-size:11px;font-weight:700;color:var(--gray-600);background:var(--gray-100);padding:6px 12px;margin:14px 0 8px;border-radius:6px;text-transform:uppercase;letter-spacing:0.5px;">${groupName}</div>`;
+        listHtml += items.join('');
+      }
+    }
+    document.getElementById('koperasiStatusList').innerHTML = listHtml;
+  }catch(e){document.getElementById('koperasiStatusList').innerHTML='<div class="empty"><div class="empty-icon">⚠️</div><p>'+e.message+'</p></div>';}
+}
+
+async function loadRekap(){
+  const periode=document.getElementById('rekapPeriode').value;
+  const pulau=document.getElementById('rekapPulau').value;
+  const hero=document.getElementById('rekapHero');
+  hero.innerHTML='<div class="loading-screen"><div class="loading-spin" style="border-top-color:#FF8080"></div><p style="color:rgba(255,255,255,0.4)">Menghitung...</p></div>';
+  ['rekapChartCard','rekapShuCard','rekapRankCard'].forEach(id=>document.getElementById(id).style.display='none');
+  try{
+    let q='select=*';
+    if(periode)q+=`&periode=eq.${encodeURIComponent(periode)}`;
+    if(pulau)q+=`&pulau=eq.${encodeURIComponent(pulau)}`;
+    const laps=await dbGet('laporan',q);
+    currentRekapLaporan = laps;
+    const allLaps2=await dbGet('laporan','select=pulau');
+    const pulauList=[...new Set(allLaps2.map(l=>l.pulau).filter(Boolean))].sort();
+    const selPulau=document.getElementById('rekapPulau');
+    const curVal=selPulau.value;
+    selPulau.innerHTML='<option value="">Semua Kepulauan</option>'+pulauList.map(p=>`<option${p===curVal?' selected':''}>${p}</option>`).join('');
+    const totalPemasukan=laps.reduce((s,l)=>s+(l.pemasukan||0),0);
+    const totalPengeluaran=laps.reduce((s,l)=>s+(l.pengeluaran||0),0);
+    const totalShu=laps.reduce((s,l)=>s+(l.shu||0),0);
+    const totalAnggota=laps.reduce((s,l)=>s+(l.anggota||0),0);
+    const totalAset=laps.reduce((s,l)=>s+(l.total_aset||0),0);
+    const totalSimpanan=laps.reduce((s,l)=>s+(l.simpanan_pokok||0)+(l.simpanan_wajib||0)+(l.simpanan_sukarela||0),0);
+    const jumlahKop=[...new Set(laps.map(l=>l.koperasi_id))].length;
+    hero.innerHTML=`
+      <div class="rekap-hero-label">Rekap ${periode||'Semua Periode'}${pulau?' · '+pulau:''}</div>
+      <div class="rekap-hero-value">Rp ${(totalPemasukan/1000000).toFixed(1)} jt</div>
+      <div class="rekap-hero-sub">Total Pemasukan · ${jumlahKop} koperasi · ${laps.length} laporan</div>
+      <div class="rekap-row">
+        <div class="rekap-mini"><div class="rekap-mini-label">Total Pengeluaran</div><div class="rekap-mini-value red">Rp ${(totalPengeluaran/1000000).toFixed(1)}jt</div></div>
+        <div class="rekap-mini"><div class="rekap-mini-label">Total SHU</div><div class="rekap-mini-value green">Rp ${(totalShu/1000000).toFixed(1)}jt</div></div>
+        <div class="rekap-mini"><div class="rekap-mini-label">Total Aset</div><div class="rekap-mini-value">Rp ${(totalAset/1000000).toFixed(1)}jt</div></div>
+        <div class="rekap-mini"><div class="rekap-mini-label">Total Simpanan</div><div class="rekap-mini-value">Rp ${(totalSimpanan/1000000).toFixed(1)}jt</div></div>
+        <div class="rekap-mini"><div class="rekap-mini-label">Total Anggota</div><div class="rekap-mini-value">${totalAnggota.toLocaleString('id')} org</div></div>
+        <div class="rekap-mini"><div class="rekap-mini-label">Rata-rata/Koperasi</div><div class="rekap-mini-value">Rp ${jumlahKop>0?((totalPemasukan/jumlahKop)/1000000).toFixed(1):0}jt</div></div>
+      </div>`;
+    if(!laps.length)return;
+    const perKop={};
+    laps.forEach(l=>{
+      if(!perKop[l.koperasi_nama])perKop[l.koperasi_nama]={pemasukan:0,shu:0};
+      perKop[l.koperasi_nama].pemasukan+=l.pemasukan||0;
+      perKop[l.koperasi_nama].shu+=l.shu||0;
+    });
+    const sorted=Object.entries(perKop).sort((a,b)=>b[1].pemasukan-a[1].pemasukan);
+    const maxVal=sorted[0]?.[1].pemasukan||1;
+    const maxShu=Math.max(...sorted.map(s=>s[1].shu))||1;
+    document.getElementById('rekapBarChart').innerHTML=sorted.map(([nama,v])=>`
+      <div class="bar-item">
+        <div class="bar-label">${nama.replace('KMP-','')}</div>
+        <div class="bar-track" style="flex:1"><div class="bar-fill" style="width:${Math.round(v.pemasukan/maxVal*100)}%"></div></div>
+        <div class="bar-val">Rp${(v.pemasukan/1000000).toFixed(1)}jt</div>
+      </div>`).join('');
+    document.getElementById('rekapChartSub').textContent=sorted.length+' kepulauan';
+    document.getElementById('rekapChartCard').style.display='block';
+    document.getElementById('rekapShuChart').innerHTML=sorted.map(([nama,v])=>`
+      <div class="bar-item">
+        <div class="bar-label">${nama.replace('KMP-','')}</div>
+        <div class="bar-track" style="flex:1"><div class="bar-fill green" style="width:${Math.round(v.shu/maxShu*100)}%"></div></div>
+        <div class="bar-val">Rp${(v.shu/1000000).toFixed(1)}jt</div>
+      </div>`).join('');
+    document.getElementById('rekapShuCard').style.display='block';
+    document.getElementById('rekapRankList').innerHTML=sorted.map(([nama,v],i)=>`
+      <div class="detail-row">
+        <span class="detail-key">${i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1)} ${nama}</span>
+        <span class="detail-val">Rp ${(v.pemasukan/1000000).toFixed(2)}jt</span>
+      </div>`).join('');
+    document.getElementById('rekapRankCard').style.display='block';
+  }catch(e){hero.innerHTML='<div class="empty"><div class="empty-icon">⚠️</div><p style="color:rgba(255,255,255,0.5)">'+e.message+'</p></div>';}
+}
+
+async function loadSemuaLaporan(){
+  const el=document.getElementById('semuaLaporanList');
+  el.innerHTML='<div class="loading-screen"><div class="loading-spin"></div><p>Memuat...</p></div>';
+  try{
+    const data=await dbGet('laporan','select=*&order=waktu_kirim.desc');
+    allLaporanCache=data;
+    document.getElementById('totalLaporan').textContent=data.length+' laporan';
+    if(!data.length){el.innerHTML='<div class="empty"><div class="empty-icon">📭</div><p>Belum ada laporan masuk</p></div>';return;}
+    el.innerHTML=data.map(l=>`
+      <div class="laporan-item" onclick='showDetailLaporan(${JSON.stringify(l)})'>
+        <div class="laporan-icon">📋</div>
+        <div class="laporan-info">
+          <div class="laporan-name">${l.koperasi_nama||'Koperasi'} — ${l.pulau||''}</div>
+          <div class="laporan-meta">${l.periode} · ${l.jenis} · SHU Rp${(l.shu||0).toLocaleString('id')}${l.file_name?' · 📎':''}</div>
+        </div>
+        <div class="laporan-right"><span class="badge-status masuk">✓ Masuk</span><span class="laporan-time">${formatWaktu(l.waktu_kirim)}</span></div>
+      </div>`).join('');
+  }catch(e){el.innerHTML='<div class="empty"><div class="empty-icon">⚠️</div><p>'+e.message+'</p></div>';}
+}
+
+// SEARCH
+async function initSearch(){
+  if(!allLaporanCache.length){
+    try{allLaporanCache=await dbGet('laporan','select=*&order=waktu_kirim.desc');}catch(e){}
+  }
+}
+
+function doSearch(){
+  const keyword=document.getElementById('searchInput').value.toLowerCase().trim();
+  const field=document.getElementById('searchFilter').value;
+  const countEl=document.getElementById('searchCount');
+  const resultsEl=document.getElementById('searchResults');
+
+  if(!keyword){
+    countEl.style.display='none';
+    resultsEl.innerHTML='<div class="empty"><div class="empty-icon">🔍</div><p>Ketik keyword untuk mulai mencari</p></div>';
+    return;
+  }
+
+  const results=allLaporanCache.filter(l=>{
+    if(field){
+      return String(l[field]||'').toLowerCase().includes(keyword);
+    }
+    return ['koperasi_nama','periode','pulau','kendala','catatan','rencana_tindak','jenis'].some(f=>String(l[f]||'').toLowerCase().includes(keyword));
+  });
+
+  countEl.style.display='block';
+  countEl.textContent=`Ditemukan ${results.length} laporan untuk "${keyword}"`;
+
+  if(!results.length){
+    resultsEl.innerHTML='<div class="empty"><div class="empty-icon">😔</div><p>Tidak ada laporan yang cocok</p></div>';
+    return;
+  }
+
+  resultsEl.innerHTML=results.map(l=>{
+    const hl=(text)=>text?text.replace(new RegExp(keyword,'gi'),m=>`<span class="highlight">${m}</span>`):'—';
+    return `<div class="laporan-item" onclick='showDetailLaporan(${JSON.stringify(l)})'>
+      <div class="laporan-icon">📋</div>
+      <div class="laporan-info">
+        <div class="laporan-name">${hl(l.koperasi_nama||'')} — ${hl(l.pulau||'')}</div>
+        <div class="laporan-meta">${hl(l.periode)} · ${hl(l.jenis)}${l.kendala?' · '+hl(l.kendala.substring(0,40))+'...':''}</div>
+      </div>
+      <div class="laporan-right"><span class="badge-status masuk">✓</span><span class="laporan-time">${formatWaktu(l.waktu_kirim)}</span></div>
+    </div>`;
+  }).join('');
+}
+
+function showDetailKop(kopId){
+  const laps=allLaporan.filter(l=>l.koperasi_id===kopId);
+  const kop=allKoperasi.find(k=>k.id===kopId);
+  if(!kop)return;
+  const lastLap=laps[0];
+  const totalMasuk=laps.reduce((s,l)=>s+(l.pemasukan||0),0);
+  const totalShu=laps.reduce((s,l)=>s+(l.shu||0),0);
+  document.getElementById('modalTitle').textContent=kop.nama;
+  document.getElementById('modalSub').textContent=kop.pulau||'';
+  document.getElementById('btnPrintModal').style.display='none';
+  
+  const footerCloseBtn = document.querySelector('.btn-close-modal');
+  if (footerCloseBtn) {
+    footerCloseBtn.textContent = 'Tutup';
+    footerCloseBtn.setAttribute('onclick', 'closeModal()');
+  }
+
+  let historyHtml = '';
+  if (laps.length > 0) {
+    historyHtml = `<div class="detail-section" style="margin-top:20px;">Riwayat Laporan (${laps.length})</div>`;
+    laps.forEach(l => {
+      historyHtml += `
+        <div class="laporan-item" onclick="showDetailLaporanById(${l.id}, ${kopId})" style="padding:10px 0; border-bottom:1px solid var(--gray-100); display:flex; align-items:center; cursor:pointer;">
+          <div class="laporan-icon" style="width:32px;height:32px;border-radius:8px;font-size:14px;background:var(--blue-light);display:flex;align-items:center;justify-content:center;margin-right:10px;flex-shrink:0;">📄</div>
+          <div class="laporan-info" style="flex:1;min-width:0;">
+            <div class="laporan-name" style="font-size:12px;font-weight:600;color:var(--black);margin-bottom:2px;">${l.periode} (${l.jenis})</div>
+            <div class="laporan-meta" style="font-size:10px;color:var(--gray-400);">${formatWaktu(l.waktu_kirim)}</div>
+          </div>
+          <div class="laporan-right" style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0;">
+            <div style="font-size:11px;font-weight:700;color:var(--green)">SHU Rp ${(l.shu||0).toLocaleString('id')}</div>
+            <div style="font-size:9px;color:var(--gray-400)">Aset Rp ${(l.total_aset||0).toLocaleString('id')}</div>
+          </div>
+        </div>
+      `;
+    });
+  } else {
+    historyHtml = `<div class="detail-section" style="margin-top:20px;">Riwayat Laporan</div>
+      <div style="text-align:center;padding:16px 0;font-size:12px;color:var(--gray-400)">Belum ada laporan masuk.</div>`;
+  }
+
+  document.getElementById('modalBody').innerHTML=`
+    <div class="detail-row"><span class="detail-key">Total Laporan</span><span class="detail-val">${laps.length} laporan</span></div>
+    <div class="detail-row"><span class="detail-key">Total Pemasukan</span><span class="detail-val">Rp ${totalMasuk.toLocaleString('id')}</span></div>
+    <div class="detail-row"><span class="detail-key">Total SHU</span><span class="detail-val">Rp ${totalShu.toLocaleString('id')}</span></div>
+    <div class="detail-row"><span class="detail-key">Anggota Aktif</span><span class="detail-val">${lastLap?.anggota||'—'} orang</span></div>
+    <div class="detail-row"><span class="detail-key">Total Aset</span><span class="detail-val">${lastLap?.total_aset?'Rp '+lastLap.total_aset.toLocaleString('id'):'—'}</span></div>
+    <div class="detail-row"><span class="detail-key">Pinjaman Disalurkan</span><span class="detail-val">${lastLap?.pinjaman_disalurkan?'Rp '+lastLap.pinjaman_disalurkan.toLocaleString('id'):'—'}</span></div>
+    <div class="detail-row"><span class="detail-key">Laporan Terakhir</span><span class="detail-val">${lastLap?formatWaktu(lastLap.waktu_kirim):'—'}</span></div>
+    <div class="detail-row"><span class="detail-key">Kendala</span><span class="detail-val" style="max-width:180px;text-align:right">${lastLap?.kendala||'—'}</span></div>
+    ${historyHtml}`;
+  document.getElementById('modalOverlay').classList.add('show');
+}
+
+function showDetailLaporan(l, fromKopId){
+  document.getElementById('modalTitle').textContent=(l.koperasi_nama||'Laporan')+' — '+l.periode;
+  document.getElementById('modalSub').textContent=l.jenis+' · '+(l.pulau||'');
+  document.getElementById('btnPrintModal').style.display='block';
+  
+  const footerCloseBtn = document.querySelector('.btn-close-modal');
+  if (footerCloseBtn) {
+    if (fromKopId) {
+      footerCloseBtn.textContent = '← Kembali';
+      footerCloseBtn.setAttribute('onclick', `showDetailKop(${fromKopId})`);
+    } else {
+      footerCloseBtn.textContent = 'Tutup';
+      footerCloseBtn.setAttribute('onclick', 'closeModal()');
+    }
+  }
+
+  document.getElementById('modalBody').innerHTML=`
+    <div class="detail-section">Identitas</div>
+    <div class="detail-row"><span class="detail-key">Anggota Aktif</span><span class="detail-val">${(l.anggota||0).toLocaleString('id')} orang</span></div>
+    
+    <div class="detail-section">Neraca</div>
+    <div class="detail-row"><span class="detail-key">Total Aset</span><span class="detail-val">Rp ${(l.total_aset||0).toLocaleString('id')}</span></div>
+    <div class="detail-row"><span class="detail-key">Kas & Bank</span><span class="detail-val">Rp ${(l.kas_bank||0).toLocaleString('id')}</span></div>
+    <div class="detail-row"><span class="detail-key">Piutang Anggota</span><span class="detail-val">Rp ${(l.piutang_anggota||0).toLocaleString('id')}</span></div>
+    <div class="detail-row"><span class="detail-key">Pinjaman Disalurkan</span><span class="detail-val">Rp ${(l.pinjaman_disalurkan||0).toLocaleString('id')}</span></div>
+    <div class="detail-row"><span class="detail-key">Total Kewajiban</span><span class="detail-val">Rp ${(l.total_kewajiban||0).toLocaleString('id')}</span></div>
+    <div class="detail-row"><span class="detail-key">Simpanan Pokok</span><span class="detail-val">Rp ${(l.simpanan_pokok||0).toLocaleString('id')}</span></div>
+    <div class="detail-row"><span class="detail-key">Simpanan Wajib</span><span class="detail-val">Rp ${(l.simpanan_wajib||0).toLocaleString('id')}</span></div>
+    <div class="detail-row"><span class="detail-key">Simpanan Sukarela</span><span class="detail-val">Rp ${(l.simpanan_sukarela||0).toLocaleString('id')}</span></div>
+    <div class="detail-row"><span class="detail-key">Dana Cadangan & Hibah</span><span class="detail-val">Rp ${(l.cadangan_hibah||0).toLocaleString('id')}</span></div>
+    
+    <div class="detail-section">PHU (Pendapatan & Beban)</div>
+    <div class="detail-row"><span class="detail-key">Total Pemasukan</span><span class="detail-val">Rp ${(l.pemasukan||0).toLocaleString('id')}</span></div>
+    <div class="detail-row"><span class="detail-key">↳ Jasa Pinjaman</span><span class="detail-val">Rp ${(l.jasa_pinjaman||l.bunga_pinjaman||0).toLocaleString('id')}</span></div>
+    <div class="detail-row"><span class="detail-key">↳ Provisi & Admin</span><span class="detail-val">Rp ${(l.pendapatan_admin||0).toLocaleString('id')}</span></div>
+    <div class="detail-row"><span class="detail-key">↳ Usaha Toko/Lainnya</span><span class="detail-val">Rp ${(l.pendapatan_usaha||0).toLocaleString('id')}</span></div>
+    <div class="detail-row"><span class="detail-key">Total Pengeluaran</span><span class="detail-val">Rp ${(l.pengeluaran||0).toLocaleString('id')}</span></div>
+    <div class="detail-row"><span class="detail-key">↳ Beban Jasa Simpanan</span><span class="detail-val">Rp ${(l.beban_jasa_simpanan||0).toLocaleString('id')}</span></div>
+    <div class="detail-row"><span class="detail-key">↳ Beban Operasional</span><span class="detail-val">Rp ${(l.beban_operasional||0).toLocaleString('id')}</span></div>
+    <div class="detail-row"><span class="detail-key">↳ Beban RAT & Koperasi</span><span class="detail-val">Rp ${(l.beban_perkoperasian||0).toLocaleString('id')}</span></div>
+    <div class="detail-row"><span class="detail-key" style="font-weight:700;color:var(--green)">SHU Bersih</span><span class="detail-val" style="font-weight:700;color:var(--green)">Rp ${(l.shu||0).toLocaleString('id')}</span></div>
+    
+    <div class="detail-section">Catatan</div>
+    <div class="detail-row"><span class="detail-key">Kendala</span><span class="detail-val" style="max-width:180px;text-align:right">${l.kendala||'—'}</span></div>
+    <div class="detail-row"><span class="detail-key">Rencana Tindak</span><span class="detail-val" style="max-width:180px;text-align:right">${l.rencana_tindak||'—'}</span></div>
+    <div class="detail-row"><span class="detail-key">Catatan</span><span class="detail-val" style="max-width:180px;text-align:right">${l.catatan||'—'}</span></div>
+    <div class="detail-row"><span class="detail-key">Waktu Kirim</span><span class="detail-val">${formatWaktu(l.waktu_kirim)}</span></div>
+    ${l.file_url?`<div class="detail-section">Lampiran</div><a href="${l.file_url}" target="_blank" class="file-link">📄 ${l.file_name||'Lihat File'} ↗</a>`:''}`;
+  document.getElementById('modalOverlay').classList.add('show');
+}
+
+function showDetailLaporanById(lapId, fromKopId) {
+  const l = allLaporan.find(lap => lap.id === lapId);
+  if (l) {
+    showDetailLaporan(l, fromKopId);
+  }
+}
+
+function closeModal(e){if(!e||e.target===document.getElementById('modalOverlay')||!e.target)document.getElementById('modalOverlay').classList.remove('show');}
+
+async function buatRangkuman(){
+  const box=document.getElementById('aiSummaryBox');
+  const textEl=document.getElementById('aiSummaryText');
+  const fokus=document.getElementById('aiFokus').value.trim();
+  const periode=document.getElementById('aiPeriode').value;
+  box.classList.add('show');
+  textEl.innerHTML='<div class="ai-loading"><div class="ai-spinner"></div> AI sedang merangkum laporan...</div>';
+  try{
+    let q='select=*&order=waktu_kirim.desc';
+    if(periode)q+=`&periode=eq.${encodeURIComponent(periode)}`;
+    const [laps,kops]=await Promise.all([dbGet('laporan',q),dbGet('koperasi','select=id,nama,kecamatan,pulau')]);
+    const sudahIds=[...new Set(laps.map(l=>l.koperasi_id))];
+    const belum=kops.filter(k=>!sudahIds.includes(k.id));
+    const totalPemasukan=laps.reduce((s,l)=>s+(l.pemasukan||0),0);
+    const totalShu=laps.reduce((s,l)=>s+(l.shu||0),0);
+    const totalAset=laps.reduce((s,l)=>s+(l.total_aset||0),0);
+    const dataRingkas=laps.map(l=>`${l.koperasi_nama}(${l.pulau||'-'}): pemasukan Rp${(l.pemasukan||0).toLocaleString('id')}, pengeluaran Rp${(l.pengeluaran||0).toLocaleString('id')}, SHU Rp${(l.shu||0).toLocaleString('id')}, aset Rp${(l.total_aset||0).toLocaleString('id')}, anggota ${l.anggota||0}, kendala:${l.kendala||'-'}`).join('\n');
+    const prompt=`Kamu asisten pengawas KMP Pattimura — Koperasi Desa Merah Putih wilayah Kepulauan Maluku. Data ${laps.length} laporan${periode?' periode '+periode:''}:\n\n${dataRingkas}\n\nTotal pemasukan: Rp${totalPemasukan.toLocaleString('id')}\nTotal SHU: Rp${totalShu.toLocaleString('id')}\nTotal Aset: Rp${totalAset.toLocaleString('id')}\nBelum lapor: ${belum.map(k=>k.nama+' ('+k.pulau+')').join(', ')||'tidak ada'}\n${fokus?'Fokus: '+fokus:''}\n\nBuat rangkuman eksekutif untuk pengawas: kondisi keuangan keseluruhan, SHU, koperasi terbaik & perlu perhatian, kendala utama, koperasi belum lapor, rekomendasi. Format rapi, Bahasa Indonesia profesional.`;
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
+    const data=await res.json();
+    textEl.textContent=data.content.map(i=>i.text||'').join('\n').trim();
+  }catch(e){textEl.textContent='⚠️ Gagal: '+e.message;}
+}
+
+function formatWaktu(iso){
+  if(!iso)return'—';
+  const diff=Math.floor((new Date()-new Date(iso))/1000);
+  if(diff<60)return'Baru saja';
+  if(diff<3600)return Math.floor(diff/60)+' menit lalu';
+  if(diff<86400)return Math.floor(diff/3600)+' jam lalu';
+  return Math.floor(diff/86400)+' hari lalu';
+}
+function printModalReport() {
+  window.print();
+}
+
+function unduhRekapExcel() {
+  if (!currentRekapLaporan || !currentRekapLaporan.length) {
+    showToast('⚠️ Tidak ada data rekap untuk diunduh');
+    return;
+  }
+  
+  const headers = [
+    'Nama Koperasi', 'Pulau', 'Periode', 'Jenis', 
+    'Total Aset', 'Kas & Bank', 'Piutang Anggota', 'Pinjaman Disalurkan',
+    'Total Kewajiban', 'Simpanan Pokok', 'Simpanan Wajib', 'Simpanan Sukarela', 'Dana Cadangan & Hibah',
+    'Total Pemasukan', 'Jasa Pinjaman', 'Provisi & Admin', 'Pendapatan Usaha Toko',
+    'Total Pengeluaran', 'Beban Jasa Simpanan', 'Beban Operasional', 'Beban RAT & Koperasi',
+    'SHU', 'Anggota Aktif', 'Kendala', 'Rencana Tindak Lanjut'
+  ];
+  
+  const rows = currentRekapLaporan.map(l => [
+    l.koperasi_nama || '',
+    l.pulau || '',
+    l.periode || '',
+    l.jenis || '',
+    l.total_aset || 0,
+    l.kas_bank || 0,
+    l.piutang_anggota || 0,
+    l.pinjaman_disalurkan || 0,
+    l.total_kewajiban || 0,
+    l.simpanan_pokok || 0,
+    l.simpanan_wajib || 0,
+    l.simpanan_sukarela || 0,
+    l.cadangan_hibah || 0,
+    l.pemasukan || 0,
+    l.jasa_pinjaman || l.bunga_pinjaman || 0,
+    l.pendapatan_admin || 0,
+    l.pendapatan_usaha || 0,
+    l.pengeluaran || 0,
+    l.beban_jasa_simpanan || 0,
+    l.beban_operasional || 0,
+    l.beban_perkoperasian || 0,
+    l.shu || 0,
+    l.anggota || 0,
+    (l.kendala || '').replace(/"/g, '""').replace(/\n/g, ' '),
+    (l.rencana_tindak || '').replace(/"/g, '""').replace(/\n/g, ' ')
+  ]);
+  
+  let csvContent = '\uFEFF';
+  csvContent += headers.map(h => `"${h}"`).join(',') + '\r\n';
+  
+  rows.forEach(r => {
+    csvContent += r.map(val => {
+      if (typeof val === 'string') {
+        return `"${val}"`;
+      }
+      return val;
+    }).join(',') + '\r\n';
+  });
+  
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  
+  const periode = document.getElementById('rekapPeriode').value || 'Semua-Periode';
+  const pulau = document.getElementById('rekapPulau').value || 'Semua-Kepulauan';
+  link.setAttribute('href', url);
+  link.setAttribute('download', `Rekap_KMP_${pulau.replace(/\s+/g, '_')}_${periode.replace(/\s+/g, '_')}.csv`);
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  
+  showToast('✓ Rekap Excel (CSV) berhasil diunduh!');
+}
+
+function showGlossaryModal() {
+  document.getElementById('modalTitle').textContent = 'ℹ️ Kamus Istilah Keuangan Koperasi';
+  document.getElementById('modalSub').textContent = 'Panduan Istilah Neraca & PHU untuk Pengawas';
+  document.getElementById('btnPrintModal').style.display = 'none';
+  document.getElementById('modalBody').innerHTML = `
+    <div style="font-size:13px;line-height:1.6;color:var(--gray-600);">
+      <div style="margin-bottom:12px;">
+        <strong style="color:var(--black);font-size:14px;display:block;margin-bottom:2px;">💰 Total Aset</strong>
+        Kekayaan total yang dimiliki koperasi, seperti kas uang tunai, saldo bank, piutang pinjaman di tangan anggota, serta aset fisik (inventaris kantor/gedung).
+      </div>
+      <div style="margin-bottom:12px;">
+        <strong style="color:var(--black);font-size:14px;display:block;margin-bottom:2px;">⚖️ Total Kewajiban (Utang)</strong>
+        Kewajiban finansial koperasi kepada pihak luar (misalnya utang bank) ditambah dengan simpanan sukarela/tabungan milik anggota yang sewaktu-waktu bisa ditarik kembali.
+      </div>
+      <div style="margin-bottom:12px;">
+        <strong style="color:var(--black);font-size:14px;display:block;margin-bottom:2px;">📈 Simpanan Pokok & Wajib (Ekuitas)</strong>
+        Pondasi modal internal koperasi. Simpanan Pokok dibayar sekali saat mendaftar, sedangkan Simpanan Wajib dibayar rutin tiap bulan. Keduanya tidak bisa ditarik selama masih menjadi anggota.
+      </div>
+      <div style="margin-bottom:12px;">
+        <strong style="color:var(--black);font-size:14px;display:block;margin-bottom:2px;">💵 Sisa Hasil Usaha (SHU)</strong>
+        Pendapatan bersih koperasi (pemasukan bunga pinjaman, biaya admin, hasil toko) setelah dikurangi seluruh biaya operasional (beban jasa simpanan, gaji karyawan, rapat anggota).
+      </div>
+      <div style="margin-bottom:12px;">
+        <strong style="color:var(--black);font-size:14px;display:block;margin-bottom:2px;">📌 Neraca Seimbang (Balance)</strong>
+        Prinsip dasar akuntansi di mana jumlah harta (Aset) wajib sama persis dengan jumlah modal dan utang (Kewajiban + Ekuitas/Simpanan).
+      </div>
+    </div>
+  `;
+  document.getElementById('modalOverlay').classList.add('show');
+}
+
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
+</script>
+</body>
+</html>
