@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panduan Penggunaan — KMP Pattimura</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+  
+  :root {
+    --red: #D42B2B;
+    --red-dark: #A81F1F;
+    --red-light: #FFF0F0;
+    --black: #0F0F0F;
+    --white: #FFFFFF;
+    --gray-50: #F9FAFB;
+    --gray-100: #F3F4F6;
+    --gray-200: #E5E7EB;
+    --gray-300: #D1D5DB;
+    --gray-400: #9CA3AF;
+    --gray-500: #6B7280;
+    --gray-600: #4B5563;
+    --gray-700: #374151;
+    --gray-800: #1F2937;
+    --green: #059669;
+    --green-light: #ECFDF5;
+    --blue: #2563EB;
+    --blue-light: #EFF6FF;
+    --orange: #D97706;
+    --orange-light: #FFFBEB;
+    --purple: #7C3AED;
+    --purple-light: #F5F3FF;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: var(--gray-800);
+    background: var(--gray-50);
+    line-height: 1.7;
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .doc-container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: white;
+    min-height: 100vh;
+  }
+
+  /* ========== COVER PAGE ========== */
+  .cover {
+    background: linear-gradient(135deg, #0F0F0F 0%, #1a1a2e 50%, #16213e 100%);
+    color: white;
+    padding: 80px 60px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .cover::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -30%;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(212,43,43,0.15) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .cover::after {
+    content: '';
+    position: absolute;
+    bottom: -40%;
+    left: -20%;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(37,99,235,0.1) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .cover-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(212,43,43,0.15);
+    border: 1px solid rgba(212,43,43,0.3);
+    border-radius: 100px;
+    padding: 8px 18px;
+    margin-bottom: 32px;
+    font-size: 12px;
+    color: #FF8080;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    position: relative;
+    z-index: 1;
+  }
+  .cover h1 {
+    font-size: 52px;
+    font-weight: 900;
+    letter-spacing: -2px;
+    line-height: 1.1;
+    margin-bottom: 12px;
+    position: relative;
+    z-index: 1;
+  }
+  .cover h1 em { color: var(--red); font-style: normal; }
+  .cover .cover-subtitle {
+    font-size: 22px;
+    font-weight: 300;
+    color: rgba(255,255,255,0.6);
+    margin-bottom: 40px;
+    position: relative;
+    z-index: 1;
+  }
+  .cover-meta {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    position: relative;
+    z-index: 1;
+  }
+  .cover-meta-item {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 16px 20px;
+    min-width: 160px;
+  }
+  .cover-meta-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.35);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+  .cover-meta-value {
+    font-size: 15px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.9);
+  }
+  .cover-footer {
+    margin-top: 60px;
+    padding-top: 24px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    font-size: 12px;
+    color: rgba(255,255,255,0.3);
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ========== CONTENT ========== */
+  .content { padding: 48px 56px; }
+
+  /* ========== TOC ========== */
+  .toc {
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: 16px;
+    padding: 32px 36px;
+    margin-bottom: 40px;
+  }
+  .toc-title {
+    font-size: 13px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--gray-400);
+    margin-bottom: 20px;
+  }
+  .toc ol {
+    list-style: none;
+    counter-reset: toc;
+  }
+  .toc ol li {
+    counter-increment: toc;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--gray-100);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--gray-700);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .toc ol li:last-child { border-bottom: none; }
+  .toc ol li::before {
+    content: counter(toc, decimal-leading-zero);
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--red);
+    background: var(--red-light);
+    padding: 3px 8px;
+    border-radius: 6px;
+    min-width: 26px;
+    text-align: center;
+  }
+
+  /* ========== HEADINGS ========== */
+  .chapter {
+    margin-top: 48px;
+    margin-bottom: 32px;
+    padding-bottom: 16px;
+    border-bottom: 3px solid var(--red);
+  }
+  .chapter-num {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--red);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+    display: block;
+  }
+  .chapter-title {
+    font-size: 28px;
+    font-weight: 900;
+    color: var(--black);
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+  }
+
+  h3 {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--gray-800);
+    margin: 32px 0 16px;
+    padding-left: 14px;
+    border-left: 4px solid var(--red);
+    line-height: 1.3;
+  }
+
+  h4 {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--gray-700);
+    margin: 24px 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  h4 .h4-badge {
+    background: var(--gray-100);
+    border-radius: 6px;
+    padding: 2px 8px;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  p { margin-bottom: 14px; color: var(--gray-600); }
+  strong { color: var(--gray-800); }
+
+  /* ========== TABLES ========== */
+  table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 16px 0 24px;
+    font-size: 13px;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--gray-200);
+  }
+  thead th {
+    background: var(--gray-800);
+    color: white;
+    font-weight: 700;
+    text-align: left;
+    padding: 12px 16px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+  tbody td {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--gray-100);
+    color: var(--gray-600);
+    vertical-align: top;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:nth-child(even) { background: var(--gray-50); }
+  tbody td:first-child { font-weight: 600; color: var(--gray-800); }
+
+  /* ========== STEP BOXES ========== */
+  .steps {
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin: 16px 0 24px;
+    counter-reset: step;
+  }
+  .step {
+    counter-increment: step;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 10px 0;
+    border-bottom: 1px dashed var(--gray-200);
+  }
+  .step:last-child { border-bottom: none; }
+  .step::before {
+    content: counter(step);
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    background: var(--red);
+    color: white;
+    font-size: 12px;
+    font-weight: 800;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1px;
+  }
+  .step-text {
+    font-size: 13px;
+    color: var(--gray-700);
+    font-weight: 500;
+    line-height: 1.6;
+    padding-top: 3px;
+  }
+  .step-text code {
+    background: var(--red-light);
+    color: var(--red);
+    padding: 2px 7px;
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: 700;
+    font-family: 'Inter', monospace;
+  }
+
+  /* ========== ALERT BOXES ========== */
+  .alert {
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin: 16px 0;
+    font-size: 13px;
+    line-height: 1.6;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .alert-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .alert-info { background: var(--blue-light); border: 1px solid rgba(37,99,235,0.15); color: var(--blue); }
+  .alert-tip { background: var(--green-light); border: 1px solid rgba(5,150,105,0.15); color: var(--green); }
+  .alert-warn { background: var(--orange-light); border: 1px solid rgba(217,119,6,0.15); color: var(--orange); }
+  .alert-danger { background: var(--red-light); border: 1px solid rgba(212,43,43,0.15); color: var(--red-dark); }
+
+  /* ========== FLOW DIAGRAM ========== */
+  .flow {
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: 14px;
+    padding: 28px;
+    margin: 20px 0;
+  }
+  .flow-title {
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--gray-400);
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .flow-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+  .flow-box {
+    background: white;
+    border: 1.5px solid var(--gray-200);
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gray-700);
+    text-align: center;
+    min-width: 120px;
+  }
+  .flow-box.primary { background: var(--red); color: white; border-color: var(--red); }
+  .flow-box.success { background: var(--green); color: white; border-color: var(--green); }
+  .flow-box.blue { background: var(--blue); color: white; border-color: var(--blue); }
+  .flow-arrow {
+    font-size: 18px;
+    color: var(--gray-300);
+    font-weight: 700;
+  }
+  .flow-arrow-down {
+    text-align: center;
+    font-size: 18px;
+    color: var(--gray-300);
+    margin: 4px 0;
+  }
+
+  /* ========== CREDENTIAL BOX ========== */
+  .cred-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin: 16px 0 24px;
+  }
+  .cred-card {
+    background: white;
+    border: 1.5px solid var(--gray-200);
+    border-radius: 10px;
+    padding: 14px 16px;
+    transition: border-color 0.2s;
+  }
+  .cred-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--gray-800);
+    margin-bottom: 4px;
+  }
+  .cred-pass {
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--red);
+    background: var(--red-light);
+    padding: 3px 10px;
+    border-radius: 6px;
+    display: inline-block;
+  }
+
+  /* ========== FIELD EXPLANATION ========== */
+  .field-explain {
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: 10px;
+    margin: 6px 0;
+    overflow: hidden;
+  }
+  .field-explain-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--gray-100);
+  }
+  .field-explain-row:last-child { border-bottom: none; }
+  .field-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--gray-800);
+    min-width: 180px;
+    flex-shrink: 0;
+  }
+  .field-desc {
+    font-size: 12px;
+    color: var(--gray-500);
+    line-height: 1.5;
+  }
+  .field-auto {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--green-light);
+    color: var(--green);
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  /* ========== SCREENSHOT PLACEHOLDER ========== */
+  .screen-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--purple-light);
+    border: 1px solid rgba(124,58,237,0.15);
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin: 12px 0;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--purple);
+  }
+
+  /* ========== DIVIDER ========== */
+  .divider {
+    height: 1px;
+    background: var(--gray-200);
+    margin: 32px 0;
+  }
+
+  /* ========== FOOTER ========== */
+  .doc-footer {
+    background: var(--gray-50);
+    border-top: 1px solid var(--gray-200);
+    padding: 24px 56px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--gray-400);
+  }
+
+  /* ========== FAQ ========== */
+  .faq-item {
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin: 12px 0;
+  }
+  .faq-q {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--gray-800);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .faq-q-icon {
+    background: var(--red);
+    color: white;
+    font-size: 11px;
+    font-weight: 800;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .faq-a {
+    font-size: 13px;
+    color: var(--gray-600);
+    line-height: 1.7;
+    padding-left: 32px;
+  }
+
+  /* ========== PRINT BUTTON ========== */
+  .print-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    border-top: 1px solid var(--gray-200);
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    z-index: 999;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+  }
+  .btn-print {
+    background: var(--red);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 28px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.2s;
+  }
+  .btn-print:hover { background: var(--red-dark); }
+  .print-hint {
+    font-size: 12px;
+    color: var(--gray-400);
+  }
+
+  /* ========== PRINT STYLES ========== */
+  @media print {
+    body { background: white; }
+    .doc-container { max-width: 100%; box-shadow: none; }
+    .print-bar { display: none !important; }
+    .cover { 
+      min-height: auto;
+      padding: 60px 50px;
+      page-break-after: always; 
+    }
+    .content { padding: 30px 40px; }
+    .chapter { page-break-before: always; margin-top: 20px; }
+    .chapter:first-of-type { page-break-before: avoid; }
+    h3 { page-break-after: avoid; }
+    table, .steps, .alert, .faq-item { page-break-inside: avoid; }
+    .flow { page-break-inside: avoid; }
+    .toc { page-break-after: always; }
+    .doc-footer { page-break-before: avoid; }
+    
+    @page {
+      margin: 1.5cm 1.5cm 2cm 1.5cm;
+      size: A4;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- PRINT BUTTON BAR -->
+<div class="print-bar">
+  <button class="btn-print" onclick="window.print()">🖨️ Simpan sebagai PDF</button>
+  <span class="print-hint">Klik tombol ini → pilih <strong>"Save as PDF"</strong> → Save</span>
+</div>
+
+<div class="doc-container">
+
+  <!-- ==================== COVER PAGE ==================== -->
+  <div class="cover">
+    <div class="cover-badge">● Dokumentasi Resmi</div>
+    <h1>Panduan<br>Penggunaan<br>KMP <em>Pattimura</em></h1>
+    <p class="cover-subtitle">Platform Pelaporan Keuangan<br>Koperasi Desa Merah Putih — Kepulauan Maluku</p>
+    <div class="cover-meta">
+      <div class="cover-meta-item">
+        <div class="cover-meta-label">Versi</div>
+        <div class="cover-meta-value">1.0</div>
+      </div>
+      <div class="cover-meta-item">
+        <div class="cover-meta-label">Terakhir Diperbarui</div>
+        <div class="cover-meta-value">Juni 2026</div>
+      </div>
+      <div class="cover-meta-item">
+        <div class="cover-meta-label">Jumlah Halaman</div>
+        <div class="cover-meta-value">Panduan Lengkap</div>
+      </div>
+    </div>
+    <div class="cover-footer">
+      Dokumen ini berisi panduan penggunaan lengkap aplikasi KMP Pattimura untuk seluruh peran pengguna (Koperasi dan Pengawas).
+    </div>
+  </div>
+
+  <!-- ==================== TABLE OF CONTENTS ==================== -->
+  <div class="content">
+    <div class="toc">
+      <div class="toc-title">Daftar Isi</div>
+      <ol>
+        <li>Apa itu KMP Pattimura?</li>
+        <li>Cara Mengakses Aplikasi</li>
+        <li>Login — Masuk ke Sistem</li>
+        <li>Portal Koperasi — Mengirim Laporan</li>
+        <li>Portal Pengawas — Monitoring & Analisis</li>
+        <li>Fitur Tambahan (Cetak PDF, Export Excel, dll)</li>
+        <li>FAQ & Troubleshooting</li>
+      </ol>
+    </div>
+
+    <!-- ==================== BAB 1 ==================== -->
+    <div class="chapter">
+      <span class="chapter-num">Bab 01</span>
+      <div class="chapter-title">Apa itu KMP Pattimura?</div>
+    </div>
+
+    <p><strong>KMP Pattimura</strong> adalah aplikasi web untuk pelaporan keuangan <strong>Koperasi Desa Merah Putih</strong> di seluruh wilayah Kepulauan Maluku. Aplikasi ini menggantikan sistem pelaporan via WhatsApp sebelumnya, sehingga proses pelaporan menjadi lebih terstruktur, terdokumentasi, dan mudah dipantau.</p>
+
+    <h3>Siapa yang Menggunakan?</h3>
+    <table>
+      <thead><tr><th>Peran</th><th>Pengguna</th><th>Fungsi Utama</th></tr></thead>
+      <tbody>
+        <tr><td>🏢 Koperasi</td><td>Pengurus 7 cabang koperasi</td><td>Mengirim laporan keuangan berkala (Neraca, PHU, Catatan)</td></tr>
+        <tr><td>👁️ Pengawas</td><td>Supervisor pusat</td><td>Memantau, menganalisis, dan merekap semua laporan</td></tr>
+      </tbody>
+    </table>
+
+    <h3>7 Cabang Koperasi</h3>
+    <table>
+      <thead><tr><th>No</th><th>Nama Cabang</th><th>Wilayah</th><th>Kepulauan</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>KMP-Ambon</td><td>Kota Ambon</td><td>Kepulauan Ambon</td></tr>
+        <tr><td>2</td><td>KMP-Seram</td><td>Maluku Tengah</td><td>Kepulauan Seram</td></tr>
+        <tr><td>3</td><td>KMP-Buru</td><td>Kabupaten Buru</td><td>Kepulauan Buru</td></tr>
+        <tr><td>4</td><td>KMP-Kei</td><td>Maluku Tenggara</td><td>Kepulauan Kei</td></tr>
+        <tr><td>5</td><td>KMP-Tanimbar</td><td>Kep. Tanimbar</td><td>Kepulauan Tanimbar</td></tr>
+        <tr><td>6</td><td>KMP-Aru</td><td>Kepulauan Aru</td><td>Kepulauan Aru</td></tr>
+        <tr><td>7</td><td>KMP-Babar</td><td>Maluku Barat Daya</td><td>Kepulauan Babar</td></tr>
+      </tbody>
+    </table>
+
+    <!-- ==================== BAB 2 ==================== -->
+    <div class="chapter">
+      <span class="chapter-num">Bab 02</span>
+      <div class="chapter-title">Cara Mengakses Aplikasi</div>
+    </div>
+
+    <p>Aplikasi KMP Pattimura bisa dibuka dari <strong>HP (smartphone)</strong> maupun <strong>laptop/PC</strong> — cukup buka browser dan ketik alamat website.</p>
+
+    <div class="steps">
+      <div class="step"><div class="step-text">Buka browser apapun (Chrome, Safari, Firefox, Edge)</div></div>
+      <div class="step"><div class="step-text">Ketik alamat: <code>silapor-pattimura-xxx.vercel.app</code> (tanyakan link terbaru ke admin)</div></div>
+      <div class="step"><div class="step-text">Aplikasi langsung terbuka — <strong>tidak perlu install apapun</strong></div></div>
+    </div>
+
+    <div class="alert alert-tip">
+      <span class="alert-icon">💡</span>
+      <div><strong>Tips:</strong> Di Chrome HP, ketuk ⋮ → <em>"Add to Home Screen"</em> agar bisa buka seperti aplikasi biasa tanpa mengetik URL setiap kali.</div>
+    </div>
+
+    <!-- ==================== BAB 3 ==================== -->
+    <div class="chapter">
+      <span class="chapter-num">Bab 03</span>
+      <div class="chapter-title">Login — Masuk ke Sistem</div>
+    </div>
+
+    <p>Saat pertama kali membuka aplikasi, kamu akan melihat halaman login berwarna hitam dengan logo <strong>KMP Pattimura</strong>.</p>
+
+    <h3>3.1 Login sebagai Koperasi</h3>
+    <div class="steps">
+      <div class="step"><div class="step-text">Pilih <strong>"Masuk sebagai"</strong> → <code>Koperasi</code></div></div>
+      <div class="step"><div class="step-text">Pilih nama koperasimu dari dropdown yang muncul</div></div>
+      <div class="step"><div class="step-text">Masukkan password koperasi (lihat tabel di bawah)</div></div>
+      <div class="step"><div class="step-text">Klik tombol <strong>"Masuk →"</strong></div></div>
+    </div>
+
+    <h4>Daftar Password Koperasi</h4>
+    <div class="cred-grid">
+      <div class="cred-card"><div class="cred-name">KMP-Ambon</div><div class="cred-pass">kmpambon</div></div>
+      <div class="cred-card"><div class="cred-name">KMP-Seram</div><div class="cred-pass">kmpseram</div></div>
+      <div class="cred-card"><div class="cred-name">KMP-Buru</div><div class="cred-pass">kmpburu</div></div>
+      <div class="cred-card"><div class="cred-name">KMP-Kei</div><div class="cred-pass">kmpkei</div></div>
+      <div class="cred-card"><div class="cred-name">KMP-Tanimbar</div><div class="cred-pass">kmptanimbar</div></div>
+      <div class="cred-card"><div class="cred-name">KMP-Aru</div><div class="cred-pass">kmparu</div></div>
+      <div class="cred-card"><div class="cred-name">KMP-Babar</div><div class="cred-pass">kmpbabar</div></div>
+    </div>
+
+    <h3>3.2 Login sebagai Pengawas</h3>
+    <div class="steps">
+      <div class="step"><div class="step-text">Pilih <strong>"Masuk sebagai"</strong> → <code>Pengawas</code></div></div>
+      <div class="step"><div class="step-text">Masukkan password: <code>pengawas123</code></div></div>
+      <div class="step"><div class="step-text">Klik tombol <strong>"Masuk →"</strong></div></div>
+    </div>
+
+    <div class="alert alert-info">
+      <span class="alert-icon">ℹ️</span>
+      <div><strong>Session tersimpan otomatis.</strong> Selama kamu tidak menekan tombol logout (↩), kamu tetap login meskipun menutup browser.</div>
+    </div>
+
+    <h3>3.3 Logout (Keluar)</h3>
+    <p>Klik tombol <strong>↩</strong> (panah) di <strong>pojok kanan atas</strong> layar untuk kembali ke halaman login.</p>
+
+    <!-- ==================== BAB 4 ==================== -->
+    <div class="chapter">
+      <span class="chapter-num">Bab 04</span>
+      <div class="chapter-title">Portal Koperasi — Mengirim Laporan</div>
+    </div>
+
+    <p>Setelah login sebagai koperasi, kamu akan melihat 2 tab: <strong>📤 Kirim Laporan</strong> dan <strong>📋 Riwayat</strong>.</p>
+
+    <!-- IDENTITAS -->
+    <h3>4.1 Mengisi Form Laporan</h3>
+    <p>Form laporan terdiri dari <strong>5 bagian</strong>. Scroll ke bawah untuk mengisi semua bagian.</p>
+
+    <h4>Bagian 1: 📌 Identitas Laporan</h4>
+    <div class="field-explain">
+      <div class="field-explain-row">
+        <div class="field-label">Periode</div>
+        <div class="field-desc">Bulan laporan yang dilaporkan. Contoh: <em>Mei 2025</em></div>
+      </div>
+      <div class="field-explain-row">
+        <div class="field-label">Jenis Laporan</div>
+        <div class="field-desc">Pilih: <em>Bulanan</em>, <em>Triwulan</em>, atau <em>Tahunan</em></div>
+      </div>
+      <div class="field-explain-row">
+        <div class="field-label">Jumlah Anggota Aktif</div>
+        <div class="field-desc">Total anggota koperasi saat ini. Contoh: <em>120</em></div>
+      </div>
+    </div>
+
+    <!-- NERACA -->
+    <h4>Bagian 2: ⚖️ Neraca (Posisi Keuangan)</h4>
+    <p>Bagian ini melaporkan kondisi aset, utang, dan modal koperasi.</p>
+
+    <div class="screen-label">📋 Sub-bagian: Aset (Harta Koperasi)</div>
+    <div class="field-explain">
+      <div class="field-explain-row">
+        <div class="field-label">Total Aset (Rp)</div>
+        <div class="field-desc">Jumlah seluruh harta koperasi. Masukkan angka tanpa titik, contoh: <em>450000000</em></div>
+      </div>
+      <div class="field-explain-row">
+        <div class="field-label">Kas & Bank (Rp)</div>
+        <div class="field-desc">Uang tunai + saldo di rekening bank</div>
+      </div>
+      <div class="field-explain-row">
+        <div class="field-label">Piutang Anggota (Rp)</div>
+        <div class="field-desc">Uang pinjaman yang belum dikembalikan anggota</div>
+      </div>
+      <div class="field-explain-row">
+        <div class="field-label">Pinjaman Disalurkan (Rp)</div>
+        <div class="field-desc">Total pinjaman yang sudah diberikan ke anggota</div>
+      </div>
+    </div>
+
+    <div class="screen-label">📋 Sub-bagian: Kewajiban & Ekuitas</div>
+    <div class="field-explain">
+      <div class="field-explain-row">
+        <div class="field-label">Total Kewajiban / Utang (Rp)</div>
+        <div class="field-desc">Utang koperasi ke pihak luar (bank, dll)</div>
+      </div>
+      <div class="field-explain-row">
+        <div class="field-label">Dana Cadangan & Hibah (Rp)</div>
+        <div class="field-desc">Dana cadangan + hibah yang diterima</div>
+      </div>
+    </div>
+
+    <div class="screen-label">📋 Sub-bagian: Simpanan Anggota</div>
+    <div class="field-explain">
+      <div class="field-explain-row">
+        <div class="field-label">Simpanan Pokok (Rp)</div>
+        <div class="field-desc">Dibayar sekali saat menjadi anggota — tidak bisa ditarik</div>
+      </div>
+      <div class="field-explain-row">
+        <div class="field-label">Simpanan Wajib (Rp)</div>
+        <div class="field-desc">Dibayar rutin tiap bulan — tidak bisa ditarik</div>
+      </div>
+      <div class="field-explain-row">
+        <div class="field-label">Simpanan Sukarela (Rp)</div>
+        <div class="field-desc">Tabungan anggota yang bisa ditarik kapan saja</div>
+      </div>
+    </div>
+
+    <div class="alert alert-warn">
+      <span class="alert-icon">⚠️</span>
+      <div><strong>Cek Neraca Seimbang!</strong> Sistem otomatis menghitung:
+        <br>• ✅ <strong>Hijau</strong> = Neraca seimbang (Aktiva = Pasiva) → Benar!
+        <br>• ⚠️ <strong>Merah</strong> = Neraca belum seimbang → Cek ulang angka
+        <br><br><strong>Rumus:</strong> Total Aset = Kewajiban + Simpanan Pokok + Simpanan Wajib + Simpanan Sukarela + Dana Cadangan
+      </div>
+    </div>
+
+    <!-- PHU -->
+    <h4>Bagian 3: 📊 Perhitungan Hasil Usaha (PHU)</h4>
+    <p>Bagian ini melaporkan pendapatan dan pengeluaran koperasi.</p>
+
+    <div class="screen-label">📋 Sub-bagian: Pendapatan (Pemasukan)</div>
+    <div class="field-explain">
+      <div class="field-explain-row">
+        <div class="field-label">Jasa Pinjaman / Bunga (Rp)</div>
+        <div class="field-desc">Pendapatan bunga dari pinjaman anggota</div>
+      </div>
+      <div class="field-explain-row">
+        <div class="field-label">Provisi & Administrasi (Rp)</div>
+        <div class="field-desc">Biaya admin yang dipungut dari anggota</div>
+      </div>
+      <div class="field-explain-row">
+        <div class="field-label">Usaha Toko / Lainnya (Rp)</div>
+        <div class="field-desc">Pendapatan dari usaha toko atau unit usaha lain</div>
+      </div>
+      <div class="field-explain-row">
+        <div class="field-label">Total Pemasukan (Rp) <span class="field-auto">⚡ Otomatis</span></div>
+        <div class="field-desc">Dihitung otomatis dari 3 field di atas — tidak perlu diisi manual</div>
+      </div>
+    </div>
+
+    <div class="screen-label">📋 Sub-bagian: Beban (Pengeluaran)</div>
+    <div class="field-explain">
+      <div class="field-explain-row">
+        <div class="field-label">Beban Jasa Simpanan (Rp)</div>
+        <div class="field-desc">Bunga/jasa yang dibayar ke anggota atas simpanannya</div>
+      </div>
+      <div class="field-explain-row">
+        <div class="field-label">Beban Operasional (Rp)</div>
+        <div class="field-desc">Gaji karyawan, listrik, sewa kantor, ATK, dll</div>
+      </div>
+      <div class="field-explain-row">
+        <div class="field-label">Beban RAT & Koperasi (Rp)</div>
+        <div class="field-desc">Biaya rapat anggota, pelatihan, iuran koperasi</div>
+      </div>
+      <div class="field-explain-row">
+        <div class="field-label">Total Pengeluaran (Rp) <span class="field-auto">⚡ Otomatis</span></div>
+        <div class="field-desc">Dihitung otomatis dari 3 field di atas — tidak perlu diisi manual</div>
+      </div>
+    </div>
+
+    <div class="screen-label">📋 Sub-bagian: Hasil Akhir</div>
+    <div class="field-explain">
+      <div class="field-explain-row">
+        <div class="field-label">SHU Periode Ini (Rp) <span class="field-auto">⚡ Otomatis</span></div>
+        <div class="field-desc">= Total Pemasukan − Total Pengeluaran. Dihitung otomatis.</div>
+      </div>
+    </div>
+
+    <div class="alert alert-tip">
+      <span class="alert-icon">💡</span>
+      <div><strong>Field bertanda ⚡ Otomatis (berwarna abu-abu) tidak perlu diisi manual.</strong> Sistem menghitung otomatis saat kamu mengisi field pendapatan dan beban di atasnya.</div>
+    </div>
+
+    <!-- CATATAN -->
+    <h4>Bagian 4: 📝 Catatan & Rencana</h4>
+    <div class="field-explain">
+      <div class="field-explain-row">
+        <div class="field-label">Kendala yang Dihadapi</div>
+        <div class="field-desc">Masalah/hambatan operasional. Contoh: <em>"Keterlambatan cicilan dari beberapa anggota"</em></div>
+      </div>
+      <div class="field-explain-row">
+        <div class="field-label">Rencana Tindak Lanjut</div>
+        <div class="field-desc">Langkah yang akan diambil. Contoh: <em>"Pendekatan personal ke anggota yang menunggak"</em></div>
+      </div>
+      <div class="field-explain-row">
+        <div class="field-label">Catatan Tambahan</div>
+        <div class="field-desc">Info lain untuk pengawas. Contoh: <em>"Simpanan meningkat 5% bulan ini"</em></div>
+      </div>
+    </div>
+
+    <!-- LAMPIRAN -->
+    <h4>Bagian 5: 📎 Lampiran File (Opsional)</h4>
+    <div class="steps">
+      <div class="step"><div class="step-text">Klik area <strong>"Ketuk untuk upload file"</strong></div></div>
+      <div class="step"><div class="step-text">Pilih file dari HP/komputer — format: <code>PDF</code> atau <code>Excel (.xlsx/.xls)</code></div></div>
+      <div class="step"><div class="step-text">File yang dipilih akan muncul di bawah area upload</div></div>
+      <div class="step"><div class="step-text">Klik <strong>✕</strong> jika ingin menghapus file yang sudah dipilih</div></div>
+    </div>
+
+    <div class="alert alert-info">
+      <span class="alert-icon">ℹ️</span>
+      <div>Upload file bersifat <strong>opsional</strong>. Laporan tetap bisa dikirim tanpa lampiran.</div>
+    </div>
+
+    <!-- KIRIM -->
+    <h3>4.2 Mengirim Laporan</h3>
+    <div class="steps">
+      <div class="step"><div class="step-text">Pastikan semua data sudah diisi dengan benar</div></div>
+      <div class="step"><div class="step-text">Cek neraca sudah seimbang (badge hijau ✓)</div></div>
+      <div class="step"><div class="step-text">Klik tombol merah <strong>"📤 Kirim Laporan ke Pengawas"</strong> di paling bawah</div></div>
+      <div class="step"><div class="step-text">Tunggu proses pengiriman (tombol berubah "Mengirim...")</div></div>
+      <div class="step"><div class="step-text">Muncul notifikasi <strong>"✓ Laporan berhasil dikirim ke pengawas!"</strong></div></div>
+    </div>
+
+    <div class="alert alert-warn">
+      <span class="alert-icon">⚠️</span>
+      <div><strong>Syarat minimal:</strong> Isi minimal salah satu dari Pemasukan, Jumlah Anggota, atau Catatan agar laporan bisa dikirim.</div>
+    </div>
+
+    <!-- RIWAYAT -->
+    <h3>4.3 📋 Riwayat — Melihat Laporan Terkirim</h3>
+    <div class="steps">
+      <div class="step"><div class="step-text">Klik tab <strong>"📋 Riwayat"</strong></div></div>
+      <div class="step"><div class="step-text">Semua laporan yang pernah kamu kirim akan muncul</div></div>
+      <div class="step"><div class="step-text">Klik salah satu laporan untuk melihat <strong>detail lengkap</strong></div></div>
+    </div>
+
+    <!-- ALUR KOPERASI -->
+    <div class="flow">
+      <div class="flow-title">Alur Kerja Koperasi</div>
+      <div class="flow-row">
+        <div class="flow-box">🔐 Login Koperasi</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">📌 Isi Identitas</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">⚖️ Isi Neraca</div>
+      </div>
+      <div class="flow-arrow-down">↓</div>
+      <div class="flow-row">
+        <div class="flow-box success">✅ Terkirim!</div>
+        <div class="flow-arrow">←</div>
+        <div class="flow-box primary">📤 Kirim Laporan</div>
+        <div class="flow-arrow">←</div>
+        <div class="flow-box">📊 Isi PHU</div>
+      </div>
+    </div>
+
+    <!-- ==================== BAB 5 ==================== -->
+    <div class="chapter">
+      <span class="chapter-num">Bab 05</span>
+      <div class="chapter-title">Portal Pengawas — Monitoring & Analisis</div>
+    </div>
+
+    <p>Setelah login sebagai pengawas, kamu memiliki <strong>4 tab</strong>: 📊 Dashboard · 📈 Rekap · 📋 Laporan · 🔍 Cari</p>
+
+    <!-- DASHBOARD -->
+    <h3>5.1 📊 Dashboard — Status Kepatuhan</h3>
+    <p>Dashboard menampilkan ringkasan status pelaporan per periode.</p>
+
+    <table>
+      <thead><tr><th>Komponen</th><th>Penjelasan</th></tr></thead>
+      <tbody>
+        <tr><td>Progress Bar Kepatuhan</td><td>Persentase koperasi yang sudah lapor periode ini</td></tr>
+        <tr><td>Total Koperasi</td><td>Jumlah semua cabang (7)</td></tr>
+        <tr><td>Sudah Lapor</td><td>Jumlah koperasi yang sudah kirim laporan</td></tr>
+        <tr><td>Belum Lapor</td><td>Jumlah koperasi yang belum kirim laporan</td></tr>
+        <tr><td>Total Anggota</td><td>Jumlah anggota dari koperasi yang sudah lapor</td></tr>
+        <tr><td>Status per Kepulauan</td><td>Daftar setiap koperasi, dikelompokkan per wilayah</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Filter Periode</h4>
+    <p>Pilih periode di dropdown kanan atas (contoh: "Mei 2025") — dashboard otomatis update.</p>
+
+    <h4>Melihat Detail Koperasi</h4>
+    <div class="steps">
+      <div class="step"><div class="step-text">Klik nama koperasi manapun di daftar</div></div>
+      <div class="step"><div class="step-text">Modal/popup muncul dari bawah dengan ringkasan lengkap</div></div>
+      <div class="step"><div class="step-text">Di bagian bawah ada <strong>"Riwayat Laporan"</strong> — klik untuk lihat detail</div></div>
+      <div class="step"><div class="step-text">Klik <strong>"Tutup"</strong> atau area gelap di belakang untuk menutup</div></div>
+    </div>
+
+    <h4>Pengelompokan 3 Gugusan Wilayah</h4>
+    <table>
+      <thead><tr><th>Gugusan</th><th>Koperasi</th></tr></thead>
+      <tbody>
+        <tr><td>📍 Ambon & Seram (Utara & Tengah)</td><td>KMP-Ambon, KMP-Seram</td></tr>
+        <tr><td>📍 Kei & Aru (Tenggara)</td><td>KMP-Kei, KMP-Aru</td></tr>
+        <tr><td>📍 Buru, Tanimbar, Babar (Selatan & Barat Daya)</td><td>KMP-Buru, KMP-Tanimbar, KMP-Babar</td></tr>
+      </tbody>
+    </table>
+
+    <!-- REKAP -->
+    <h3>5.2 📈 Rekap — Analisis Agregat & Grafik</h3>
+    <p>Tab Rekap menampilkan rekapitulasi total keuangan seluruh koperasi dengan grafik batang.</p>
+
+    <h4>Filter Data</h4>
+    <div class="steps">
+      <div class="step"><div class="step-text">Pilih periode dari dropdown <strong>"Filter Periode"</strong> (atau biarkan "Semua Periode")</div></div>
+      <div class="step"><div class="step-text">Pilih kepulauan dari dropdown <strong>"Filter Kepulauan"</strong> (atau biarkan "Semua")</div></div>
+      <div class="step"><div class="step-text">Data dan grafik otomatis berubah sesuai filter</div></div>
+    </div>
+
+    <h4>Data yang Ditampilkan</h4>
+    <table>
+      <thead><tr><th>Data</th><th>Penjelasan</th></tr></thead>
+      <tbody>
+        <tr><td>Total Pemasukan</td><td>Angka besar utama — total pemasukan semua koperasi</td></tr>
+        <tr><td>Total Pengeluaran</td><td>Total biaya operasional (warna merah)</td></tr>
+        <tr><td>Total SHU</td><td>Total laba bersih semua koperasi (warna hijau)</td></tr>
+        <tr><td>Total Aset</td><td>Total harta semua koperasi</td></tr>
+        <tr><td>Total Simpanan</td><td>Total simpanan pokok + wajib + sukarela</td></tr>
+        <tr><td>Total Anggota</td><td>Jumlah anggota dari semua koperasi</td></tr>
+        <tr><td>Rata-rata/Koperasi</td><td>Rata-rata pemasukan per koperasi</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Grafik & Ranking</h4>
+    <p><strong>📊 Pemasukan per Kepulauan</strong> — Grafik batang perbandingan pemasukan.</p>
+    <p><strong>💰 SHU per Kepulauan</strong> — Grafik batang perbandingan SHU (hijau).</p>
+    <p><strong>🏆 Ranking Koperasi</strong> — Peringkat dari pemasukan tertinggi (🥇🥈🥉).</p>
+
+    <!-- LAPORAN -->
+    <h3>5.3 📋 Laporan — Daftar Semua Laporan</h3>
+    <div class="steps">
+      <div class="step"><div class="step-text">Klik tab <strong>"📋 Laporan"</strong></div></div>
+      <div class="step"><div class="step-text">Semua laporan dari semua koperasi muncul, diurutkan terbaru</div></div>
+      <div class="step"><div class="step-text">Klik salah satu laporan untuk melihat <strong>detail lengkap</strong></div></div>
+    </div>
+
+    <!-- CARI -->
+    <h3>5.4 🔍 Cari — Pencarian Laporan</h3>
+    <div class="steps">
+      <div class="step"><div class="step-text">Klik tab <strong>"🔍 Cari"</strong></div></div>
+      <div class="step"><div class="step-text">Ketik kata kunci di kolom pencarian (contoh: "Ambon", "kendala", "Mei")</div></div>
+      <div class="step"><div class="step-text">Hasil muncul otomatis saat mengetik — keyword di-<strong>highlight kuning</strong></div></div>
+      <div class="step"><div class="step-text">Gunakan dropdown filter untuk mempersempit: Koperasi, Periode, Kepulauan, Kendala, atau Catatan</div></div>
+    </div>
+
+    <!-- ALUR PENGAWAS -->
+    <div class="flow">
+      <div class="flow-title">Alur Kerja Pengawas</div>
+      <div class="flow-row">
+        <div class="flow-box">🔐 Login Pengawas</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box blue">📊 Cek Dashboard</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">📈 Lihat Rekap</div>
+      </div>
+      <div class="flow-arrow-down">↓</div>
+      <div class="flow-row">
+        <div class="flow-box">🔍 Cari Laporan</div>
+        <div class="flow-arrow">←</div>
+        <div class="flow-box">📋 Baca Detail</div>
+        <div class="flow-arrow">←</div>
+        <div class="flow-box">📥 Export Excel/PDF</div>
+      </div>
+    </div>
+
+    <!-- ==================== BAB 6 ==================== -->
+    <div class="chapter">
+      <span class="chapter-num">Bab 06</span>
+      <div class="chapter-title">Fitur Tambahan</div>
+    </div>
+
+    <h3>6.1 🖨️ Cetak Laporan ke PDF</h3>
+    <div class="steps">
+      <div class="step"><div class="step-text">Buka detail laporan (klik laporan manapun)</div></div>
+      <div class="step"><div class="step-text">Klik tombol biru <strong>"🖨️ Cetak PDF"</strong> di bawah detail</div></div>
+      <div class="step"><div class="step-text">Muncul dialog print dari browser</div></div>
+      <div class="step"><div class="step-text">Pilih <strong>"Save as PDF"</strong> → klik Save</div></div>
+    </div>
+
+    <h3>6.2 📥 Download Rekap ke Excel (CSV)</h3>
+    <div class="steps">
+      <div class="step"><div class="step-text">Masuk ke tab <strong>"📈 Rekap"</strong></div></div>
+      <div class="step"><div class="step-text">Atur filter periode dan kepulauan sesuai kebutuhan</div></div>
+      <div class="step"><div class="step-text">Klik tombol hijau <strong>"📥 Unduh Rekap (Excel)"</strong></div></div>
+      <div class="step"><div class="step-text">File CSV terdownload otomatis — buka dengan Excel atau Google Sheets</div></div>
+    </div>
+
+    <p>File CSV berisi: Nama Koperasi, Pulau, Periode, seluruh data Neraca & PHU, Jumlah Anggota, Kendala, dan Rencana Tindak Lanjut.</p>
+
+    <h3>6.3 ℹ️ Kamus Istilah Keuangan</h3>
+    <div class="steps">
+      <div class="step"><div class="step-text">Masuk ke tab <strong>"📈 Rekap"</strong></div></div>
+      <div class="step"><div class="step-text">Klik tombol biru <strong>"ℹ️ Bantuan Istilah"</strong></div></div>
+      <div class="step"><div class="step-text">Popup kamus istilah muncul dengan penjelasan: Total Aset, Kewajiban, Simpanan, SHU, Neraca</div></div>
+    </div>
+
+    <h3>6.4 📄 Lihat Lampiran File</h3>
+    <div class="steps">
+      <div class="step"><div class="step-text">Buka detail laporan yang memiliki lampiran</div></div>
+      <div class="step"><div class="step-text">Scroll ke bawah, cari bagian <strong>"Lampiran"</strong></div></div>
+      <div class="step"><div class="step-text">Klik link biru <strong>"📄 [Nama File] ↗"</strong> — file terbuka di tab baru</div></div>
+    </div>
+
+    <h3>6.5 🔄 Mode Simulasi (Offline)</h3>
+    <p>Jika koneksi internet terputus atau database sedang offline, aplikasi <strong>otomatis beralih ke Mode Simulasi</strong> dengan data contoh/demo.</p>
+
+    <div class="alert alert-danger">
+      <span class="alert-icon">🚨</span>
+      <div><strong>Pada Mode Simulasi, data TIDAK tersimpan permanen.</strong> Laporan yang dikirim hanya tersimpan sementara dan hilang saat refresh. Pastikan kamu terhubung ke internet untuk mengirim laporan sungguhan.</div>
+    </div>
+
+    <!-- ==================== BAB 7 ==================== -->
+    <div class="chapter">
+      <span class="chapter-num">Bab 07</span>
+      <div class="chapter-title">FAQ & Troubleshooting</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q"><div class="faq-q-icon">?</div> Password salah, tidak bisa login?</div>
+      <div class="faq-a">
+        <strong>Koperasi:</strong> Pastikan kamu memilih koperasi yang benar dari dropdown, lalu masukkan password sesuai tabel di Bab 3.1.<br>
+        <strong>Pengawas:</strong> Password pengawas adalah <code>pengawas123</code> (huruf kecil semua, tanpa spasi).
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q"><div class="faq-q-icon">?</div> Laporan tidak terkirim?</div>
+      <div class="faq-a">
+        1. Pastikan minimal isi salah satu: Pemasukan, Jumlah Anggota, atau Catatan<br>
+        2. Cek koneksi internet<br>
+        3. Jika muncul "Supabase Offline", tunggu beberapa saat dan coba lagi<br>
+        4. Jangan klik tombol kirim berkali-kali — tunggu proses selesai
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q"><div class="faq-q-icon">?</div> Neraca menunjukkan "Belum Seimbang"?</div>
+      <div class="faq-a">
+        Cek ulang: <strong>Total Aset</strong> harus sama dengan <strong>Kewajiban + Simpanan Pokok + Simpanan Wajib + Simpanan Sukarela + Dana Cadangan</strong>.<br><br>
+        Neraca belum seimbang <strong>tidak menghalangi</strong> pengiriman laporan — ini hanya peringatan.
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q"><div class="faq-q-icon">?</div> File lampiran tidak bisa dibuka oleh pengawas?</div>
+      <div class="faq-a">
+        Ini masalah konfigurasi CORS pada storage. Sementara, koperasi bisa mengirim file lampiran via WhatsApp ke pengawas sebagai backup. Admin teknis perlu mengecek pengaturan di Supabase Storage.
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q"><div class="faq-q-icon">?</div> Data tidak update / dashboard masih data lama?</div>
+      <div class="faq-a">
+        Aplikasi tidak memiliki auto-refresh. Untuk melihat data terbaru:<br>
+        • Klik ulang tab yang sedang aktif (contoh: klik "📊 Dashboard" lagi)<br>
+        • Atau refresh halaman browser (tekan F5 atau tarik layar ke bawah di HP)
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q"><div class="faq-q-icon">?</div> Apakah bisa digunakan di HP?</div>
+      <div class="faq-a">
+        Ya! Aplikasi sudah <strong>mobile-friendly</strong> dan otomatis menyesuaikan ukuran layar HP. Tidak perlu setting apapun — cukup buka URL di browser HP.
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q"><div class="faq-q-icon">?</div> Apakah data aman?</div>
+      <div class="faq-a">
+        Data disimpan di <strong>Supabase</strong> (cloud database), bukan di HP/komputer kamu. Namun, aplikasi ini masih tahap prototipe — password disimpan plain text dan belum ada enkripsi. <strong>Jangan gunakan untuk data sangat sensitif sebelum ada peningkatan keamanan.</strong>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div style="text-align:center; padding: 20px 0;">
+      <p style="font-size: 12px; color: var(--gray-400); margin-bottom: 4px;">Butuh bantuan lebih lanjut?</p>
+      <p style="font-size: 14px; font-weight: 700; color: var(--gray-700);">Hubungi admin sistem atau pengawas pusat</p>
+    </div>
+
+  </div>
+
+  <div class="doc-footer">
+    <p><strong>KMP Pattimura</strong> — Platform Pelaporan Koperasi Desa Merah Putih · Kepulauan Maluku</p>
+    <p>Dokumen Panduan Penggunaan v1.0 · Juni 2026</p>
+  </div>
+
+</div>
+
+<script>
+  // Add padding at bottom so content isn't hidden behind print bar
+  document.body.style.paddingBottom = '70px';
+</script>
+</body>
+</html>
